@@ -1,0 +1,373 @@
+/* ─── Scene container ────────────────────────────────── */
+.game-scene {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 842 / 1264;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  container-type: inline-size;
+  /* Suaviza a borda entre o jogo e o fundo desfocado */
+  box-shadow: 0 0 80px 40px rgba(0, 0, 0, 0.75);
+}
+
+/* Canvas container fill */
+.game-canvas-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-canvas-container canvas {
+  pointer-events: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* ─── HUD ────────────────────────────────────────────── */
+.game-hud {
+  position: absolute;
+  top: 11px;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  background: rgba(0,0,0,1);
+  backdrop-filter: blur(4px);
+  color: white;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+}
+
+.game-hud--preview::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Slots de chute — ○ vazio, ⚽ gol, cor diferente para defesa */
+.hud-slots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.hud-slot {
+  width: clamp(20px, 5.5cqw, 26px);
+  height: clamp(20px, 5.5cqw, 26px);
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(11px, 3cqw, 14px);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+.hud-slot.slot-active {
+  border-color: #fff;
+  transform: scale(1.1);
+  background: rgba(255,255,255,0.1);
+}
+.hud-slot.slot-goal {
+  border-color: #21D375;
+  background: rgba(33,211,117,0.2);
+}
+.hud-slot.slot-save {
+  border-color: rgba(248,113,113,0.6);
+  background: rgba(248,113,113,0.1);
+}
+.hud-slot.slot-empty {
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* Multiplicador central */
+.hud-multiplier {
+  font-size: clamp(15px, 4.2cqw, 20px);
+  font-weight: 900;
+  color: #B5FF6D;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+/* Prêmio acumulado */
+.hud-prize {
+  font-size: clamp(13px, 3.3cqw, 16px);
+  font-weight: 800;
+  color: #FFD700;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+/* ─── Multiplicador popup ────────────────────────────── */
+.multiplier-popup {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0,0,0,0.75);
+  border: 2px solid #FFD700;
+  border-radius: 16px;
+  padding: 14px 20px;
+  animation: multiPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+@keyframes multiPop {
+  from { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  to   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+}
+
+.multi-text {
+  display: flex;
+  flex-direction: column;
+}
+.multi-factor {
+  font-size: 32px;
+  font-weight: 900;
+  color: #FFD700;
+  line-height: 1;
+}
+.multi-year {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+}
+
+/* ─── Swipe hint ─────────────────────────────────────── */
+.swipe-hint {
+  position: absolute;
+  top: 82%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  color: rgba(255,255,255,0.7);
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: none;
+  animation: hintPulse 1.5s ease-in-out infinite;
+}
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.5; transform: translateX(-50%) translateY(0); }
+  50%       { opacity: 1;   transform: translateX(-50%) translateY(-8px); }
+}
+
+/* ─── Chico speech bubble (React overlay) ─────────────── */
+.chico-speech-wrap {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: none;
+  width: 62%;
+  max-width: 240px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Posição acima da ShotBar, à direita do Chico durante preview */
+.chico-speech-wrap.chico-speech-wrap--preview {
+  bottom: auto;
+  top: 29%;
+  left: 26%;
+  transform: translateY(-100%);
+  width: 68%;
+  max-width: 350px;
+  z-index: 22;
+  animation: bubbleFadeIn 0.4s ease 0.25s both;
+}
+
+/* ─── Chico HTML (preview) ───────────────────────────── */
+.chico-html {
+  position: absolute;
+  bottom: 38%;
+  left: 2%;
+  width: 36%;
+  z-index: 22;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.45));
+  will-change: transform;
+}
+
+/* ─── Overlay escuro do preview ──────────────────────── */
+.preview-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 18;
+  background: rgba(0, 0, 0, 0.70);
+  pointer-events: none;
+  animation: overlayFadeIn 0.3s ease both;
+}
+.preview-overlay--exiting {
+  animation: overlayFadeOut 0.4s ease forwards;
+}
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes overlayFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ─── Botão Chutar ───────────────────────────────────── */
+.chutar-btn {
+  position: absolute;
+  bottom: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(5px, 1.6cqw, 8px);
+  padding: clamp(10px, 3cqw, 14px) clamp(24px, 7.5cqw, 36px);
+  background: #11C76F;
+  color: #000000;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-size: clamp(14px, 3.8cqw, 18px);
+  font-weight: 700;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  animation: chutarIn 0.4s cubic-bezier(0.34, 1.3, 0.64, 1) 0.1s both;
+  width: 80%;
+  -webkit-tap-highlight-color: transparent;
+}
+.chutar-btn:active {
+  transform: translateX(-50%) scale(0.95);
+}
+.chutar-arrow {
+  font-size: 20px;
+  line-height: 1;
+}
+@keyframes chutarIn {
+  from { transform: translateX(-50%) translateY(60px); opacity: 0; }
+  to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+}
+.chico-speech-bubble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: bubbleFadeIn 0.3s ease;
+}
+.chico-bubble-svg {
+  width: 100%;
+  display: block;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+}
+.chico-bubble-text {
+  position: absolute;
+  left: 18%;
+  right: 4%;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #0a0a0a;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-size: clamp(11px, 2.8cqw, 14px);
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+.chico-bubble-preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-align: left;
+  align-items: flex-start;
+  
+}
+.chico-bubble-ball-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.chico-bubble-preview-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  flex: 1;
+}
+.chico-bubble-preview-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 1;
+  padding-left: 10px;
+}
+.chico-bubble-multi-label {
+  font-size: clamp(7px, 1.6cqw, 9px);
+  font-weight: 700;
+  color: #000;
+  text-align: right;
+  line-height: 1.25;
+  letter-spacing: 0.3px;
+}
+.chico-bubble-multi-value {
+  font-size: clamp(36px, 10cqw, 54px);
+  font-weight: 700;
+  color: #11C76F;
+  line-height: 1;
+  letter-spacing: -1px;
+  padding-right: 10px;
+}
+.chico-bubble-ball-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  margin-bottom: 4px;
+}
+.chico-bubble-ball-label {
+  font-size: clamp(8px, 1.8cqw, 10px);
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+.chico-bubble-ball-name {
+  font-size: clamp(12px, 2.8cqw, 15px);
+  font-weight: 800;
+  color: #000000;
+  line-height: 1.15;
+}
+.chico-bubble-ball-year {
+  font-size: clamp(18px, 4.5cqw, 26px);
+  font-weight: 700;
+  color: #000000;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+.chico-bubble-text--preview {
+  font-size: clamp(8px, 1.9cqw, 10px);
+  font-weight: 400;
+  line-height: 1.3;
+  color: #000000;
+  padding-right: 8px;
+}
+
+@keyframes bubbleFadeIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}

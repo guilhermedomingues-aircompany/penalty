@@ -1,0 +1,144 @@
+name: "Copilot Setup Steps"
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        if: hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') != ''
+        run: |
+          mkdir -p ~/.gradle
+          cat > ~/.gradle/init.gradle << EOF
+          allprojects {
+              repositories {
+                  mavenLocal()
+
+                  maven {
+                      url "https://\${System.getenv('ARTIFACT_MANAGER_URL')}/repository/from_maven/"
+                      credentials {
+                          username System.getenv('ARTIFACT_MANAGER_USER')
+                          password System.getenv('ARTIFACT_MANAGER_PASSWORD')
+                      }
+                  }
+
+                  maven {
+                      url "https://\${System.getenv('ARTIFACT_MANAGER_URL')}/repository/from_gradleplugins/"
+                      credentials {
+                          username System.getenv('ARTIFACT_MANAGER_USER')
+                          password System.getenv('ARTIFACT_MANAGER_PASSWORD')
+                      }
+                  }
+
+                  maven {
+                      url "https://\${System.getenv('ARTIFACT_MANAGER_URL')}/repository/picpay-maven-releases/"
+                      credentials {
+                          username System.getenv('ARTIFACT_MANAGER_USER')
+                          password System.getenv('ARTIFACT_MANAGER_PASSWORD')
+                      }
+                  }
+
+                  maven {
+                      url "https://\${System.getenv('ARTIFACT_MANAGER_URL')}/repository/picpay-maven-snapshots/"
+                      credentials {
+                          username System.getenv('ARTIFACT_MANAGER_USER')
+                          password System.getenv('ARTIFACT_MANAGER_PASSWORD')
+                      }
+                  }
+              }
+          }
+          EOF
+
+      - name: Setup Maven
+        if: hashFiles('pom.xml') != ''
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml << EOF
+          <settings>
+              <mirrors>
+                  <mirror>
+                      <id>from_maven</id>
+                      <mirrorOf>central</mirrorOf>
+                      <url>https://\${env.ARTIFACT_MANAGER_URL}/repository/from_maven/</url>
+                  </mirror>
+              </mirrors>
+
+              <servers>
+                  <server>
+                      <id>picpay-releases</id>
+                      <username>\${env.ARTIFACT_MANAGER_USER}</username>
+                      <password>\${env.ARTIFACT_MANAGER_PASSWORD}</password>
+                  </server>
+                  <server>
+                      <id>picpay-snapshots</id>
+                      <username>\${env.ARTIFACT_MANAGER_USER}</username>
+                      <password>\${env.ARTIFACT_MANAGER_PASSWORD}</password>
+                  </server>
+                  <server>
+                      <id>from_maven</id>
+                      <username>\${env.ARTIFACT_MANAGER_USER}</username>
+                      <password>\${env.ARTIFACT_MANAGER_PASSWORD}</password>
+                  </server>
+              </servers>
+
+              <profiles>
+                  <profile>
+                      <id>picpay-deploy</id>
+                      <repositories>
+                          <repository>
+                              <id>picpay-releases</id>
+                              <url>https://\${env.ARTIFACT_MANAGER_URL}/repository/picpay-maven-releases/</url>
+                          </repository>
+                          <repository>
+                              <id>picpay-snapshots</id>
+                              <url>https://\${env.ARTIFACT_MANAGER_URL}/repository/picpay-maven-snapshots/</url>
+                          </repository>
+                          <repository>
+                              <id>from_maven</id>
+                              <url>https://\${env.ARTIFACT_MANAGER_URL}/repository/from_maven/</url>
+                          </repository>
+                      </repositories>
+                  </profile>
+              </profiles>
+
+              <activeProfiles>
+                  <activeProfile>picpay-deploy</activeProfile>
+              </activeProfiles>
+          </settings>
+          EOF
+
+      - name: Build with Gradle
+        if: hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') != ''
+        env:
+          ARTIFACT_MANAGER_URL: ${{ secrets.ARTIFACT_MANAGER_URL }}
+          ARTIFACT_MANAGER_USER: ${{ secrets.ARTIFACT_MANAGER_USER }}
+          ARTIFACT_MANAGER_PASSWORD: ${{ secrets.ARTIFACT_MANAGER_PASSWORD }}
+        run: ./gradlew build
+
+      - name: Build with Maven
+        if: hashFiles('pom.xml') != ''
+        env:
+          ARTIFACT_MANAGER_URL: ${{ secrets.ARTIFACT_MANAGER_URL }}
+          ARTIFACT_MANAGER_USER: ${{ secrets.ARTIFACT_MANAGER_USER }}
+          ARTIFACT_MANAGER_PASSWORD: ${{ secrets.ARTIFACT_MANAGER_PASSWORD }}
+        run: mvn clean compile
+

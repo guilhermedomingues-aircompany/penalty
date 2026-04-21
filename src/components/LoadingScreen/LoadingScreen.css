@@ -1,0 +1,45 @@
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 15vh;
+}
+
+.loading-ball {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  transform-origin: center bottom;
+  animation: ball-bounce 0.65s ease-in-out infinite;
+}
+
+.loading-text {
+  position: absolute;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+@keyframes ball-bounce {
+  0%, 100% {
+    transform: translateY(0) scaleX(1.2) scaleY(0.8);
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  45% {
+    transform: translateY(-40vh) scaleX(0.95) scaleY(1.05);
+    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  }
+  80% {
+    transform: translateY(0) scaleX(1.2) scaleY(0.8);
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+}
