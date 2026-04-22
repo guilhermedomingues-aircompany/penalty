@@ -27,9 +27,10 @@ export const ASSET_MAP: Record<string, string> = {
   'barrier-3':        '/sprites/jogadores-da-barreira/Barreira3.png',
   'barrier-4':        '/sprites/jogadores-da-barreira/Barreira4.png',
   'barrier-5':        '/sprites/jogadores-da-barreira/Barreira5.png',
+  'chico-explaining':  '/sprites/chico/Explicando.png',
   'chico-confident':  '/sprites/chico/Confiante.png',
   'chico-goal1':      '/sprites/chico/Comemorando1.png',
   'chico-goal2':      '/sprites/chico/Comemorando2.png',
   'chico-miss-a':     '/sprites/chico/ErrouA.png',
-  'chico-miss-b':     '/sprites/chico/ErrouB.png',
+  'chico-miss-b': '/sprites/chico/ErrouB.png',
 }
