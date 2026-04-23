@@ -316,9 +316,25 @@ export default function GameScene({ session, onShotComplete, onAllShotsComplete 
       },
     })
 
+    // ── Trajetória parabólica (bezier quadrática) ─────────────────────────────
+    // Ponto de controle acima do ponto médio da reta start→target:
+    //   cpX = média dos X  |  cpY = média dos Y − arco para cima
+    const arcHeight = 0.17 * H
+    const cpX = (BALL_X + targetX) / 2
+    const cpY = (BALL_Y + targetY) / 2 - arcHeight
+    const arcProxy = { t: 0 }
+    tl.to(arcProxy, {
+      t: 1,
+      duration: 0.55,
+      ease: 'power2.in',
+      onUpdate() {
+        const u = 1 - arcProxy.t
+        const tt = arcProxy.t
+        ball.x = u * u * BALL_X + 2 * u * tt * cpX + tt * tt * targetX
+        ball.y = u * u * BALL_Y + 2 * u * tt * cpY + tt * tt * targetY
+      },
+    }, 0)
     tl.to(ball, {
-      x: targetX,
-      y: targetY,
       rotation: ballRotation,
       duration: 0.55,
       ease: 'power2.in',
@@ -413,6 +429,8 @@ export default function GameScene({ session, onShotComplete, onAllShotsComplete 
   const handleChutarClick = useCallback(() => {
     if (phaseRef.current !== 'preview') return
 
+    playStartWhistle()
+
     const { chico, darkOverlay } = spritesRef.current
     if (chico) {
       gsap.killTweensOf(chico)
@@ -435,7 +453,6 @@ export default function GameScene({ session, onShotComplete, onAllShotsComplete 
       phaseRef.current = 'idle'
       setPhase('idle')
       setIsBarExiting(false)
-      playStartWhistle()
     }, 400)
   }, [])
 

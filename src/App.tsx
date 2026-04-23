@@ -9,6 +9,7 @@ import LoadingScreen from './components/LoadingScreen/LoadingScreen'
 import HomeScreen from './components/HomeScreen/HomeScreen'
 import ScoreScreen from './components/ScoreScreen/ScoreScreen'
 import { ASSET_MAP } from './game/assets'
+import { preloadSounds, startBackgroundMusic, stopBackgroundMusic } from './game/sounds'
 import { createSession, completeSession } from './api/client'
 import type { Session, Shot } from './types'
 
@@ -39,8 +40,9 @@ export default function App() {
   const [totalScore, setTotalScore] = useState(0)
   const sessionIdRef = useRef<string | null>(null)
 
-  // Primeira carga: preload de assets + criação de sessão em paralelo
+  // Primeira carga: preload de assets + sons + criação de sessão em paralelo
   useEffect(() => {
+    preloadSounds()
     Promise.all([preloadAssets(), fetchNewSession()])
       .then(([, sess]) => {
         sessionIdRef.current = sess.sessionId
@@ -52,11 +54,13 @@ export default function App() {
 
   const handleAllShotsComplete = useCallback(() => {
     setTimeout(() => {
+      stopBackgroundMusic()
       setScreen('score')
     }, 2000)
   }, [])
 
   const handlePlay = useCallback(() => {
+    startBackgroundMusic()
     setScreen('game')
   }, [])
 
