@@ -1,0 +1,654 @@
+/* =========================================================
+ * ResultScreen — Valores alinhados com o Figma
+ * File: CQLHRmAkiHJe0BswFL7n8R
+ * Frames: 293:13549 / 293:13596 / 293:13645 / 293:13691
+ *
+ * Design tokens observados:
+ *   brand green:       #11c76f
+ *   mint highlight:    #d2ee97
+ *   surface dark:      #141414
+ *   teal primary:      #004543
+ *   tag bg / on-color: #1f1f1f
+ *   on-color bright:   rgba(255,255,255,0.16)
+ *   on-color weakest:  rgba(255,255,255,0.09)
+ *   dark overlay:      rgba(0,0,0,0.16) | rgba(0,0,0,0.28)
+ * ========================================================= */
+
+.result-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d1117;
+  overflow: hidden;
+  font-family: 'Aeonik Pro', 'Inter', system-ui, sans-serif;
+  color: #ffffff;
+  font-feature-settings: 'ss01' 1, 'ss02' 1, 'ss05' 1, 'ss07' 1;
+}
+
+.result-screen__stage {
+  position: relative;
+  width: 100%;
+  max-width: 393px;
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 80px 40px rgba(0, 0, 0, 0.75);
+  background-color: #004543;
+  background-image:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.2) 100%),
+    linear-gradient(0deg, #004543 35%, #141414 100%);
+}
+
+.result-screen__bg {
+  display: none;
+}
+
+.result-screen__bolas {
+  position: absolute;
+  bottom: 0;
+  right: -40px;
+  width: 445px;
+  height: auto;
+  opacity: 0.05;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.result-screen__content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: max(12px, env(safe-area-inset-top)) 20px
+    max(20px, env(safe-area-inset-bottom));
+  gap: 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* --- Header / close ---------------------------------------- */
+
+.result-screen__header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 44px;
+  padding-top: 16px;
+}
+
+.result-screen__close {
+  width: 40px;
+  height: 40px;
+  border-radius: 1000px;
+  border: none;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-size: 20px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.result-screen__close:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.result-screen__close:active {
+  transform: scale(0.94);
+}
+
+/* --- Title -------------------------------------------------- */
+
+.result-screen__title {
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 28px;
+  letter-spacing: -0.65px;
+  margin: 0;
+  text-align: center;
+  color: #ffffff;
+}
+
+/* --- Shot cards row ---------------------------------------- */
+
+.result-screen__cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.shot-card {
+  position: relative;
+  height: 76px;
+  border-radius: 8px;
+  border: 1px solid #11c76f;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.shot-card--success {
+  background: linear-gradient(90deg, #11c76f 0%, #004543 100%);
+}
+
+.shot-card--error {
+  background: linear-gradient(90deg, #ffffff 0%, #9d9d9d 100%);
+}
+
+.shot-card__ball {
+  position: absolute;
+  top: -1px;
+  left: -9px;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+  z-index: 2;
+  pointer-events: none;
+}
+
+.shot-card__ball--placeholder {
+  background: radial-gradient(circle at 30% 30%, #fff, #9aa4a0 70%, #4b5551);
+  border-radius: 50%;
+}
+
+.shot-card__status {
+  position: absolute;
+  top: 4px;
+  left: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 1000px;
+  background: #1f1f1f;
+  color: #d2ee97;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 12px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.shot-card__multiplier {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.shot-card--success .shot-card__multiplier {
+  color: #d2ee97;
+}
+
+.shot-card--error .shot-card__multiplier {
+  color: #1f1f1f;
+}
+
+.shot-card__body {
+  position: absolute;
+  left: 11px;
+  right: 11px;
+  bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.shot-card__label {
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 14px;
+  text-shadow: 0 0 17.745px rgba(0, 0, 0, 0.25);
+}
+
+.shot-card--success .shot-card__label {
+  color: #ffffff;
+}
+
+.shot-card--error .shot-card__label {
+  color: #1f1f1f;
+}
+
+.shot-card__value {
+  font-family: 'Plus Jakarta Sans', 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  line-height: 21px;
+  letter-spacing: 0;
+}
+
+.shot-card__value--success {
+  color: #d2ee97;
+}
+
+.shot-card__value--error {
+  color: #1f1f1f;
+}
+
+/* --- PrizeBanner ------------------------------------------- */
+
+.prize-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.prize-banner__card {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 16px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #0d262c 0%, #004543 100%);
+  white-space: nowrap;
+}
+
+.prize-banner__label {
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 28px;
+  letter-spacing: -0.65px;
+  color: #ffffff;
+}
+
+.prize-banner__amount {
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 28px;
+  letter-spacing: -0.65px;
+  color: #11c76f;
+}
+
+.prize-banner__caption {
+  margin: 0;
+  max-width: 320px;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  color: #ffffff;
+  opacity: 0.9;
+}
+
+/* --- RetryPanel -------------------------------------------- */
+
+.retry-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.16);
+  width: 100%;
+}
+
+.retry-panel--standalone {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.retry-panel__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  height: 38px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 30px;
+  text-align: center;
+}
+
+.retry-panel__fast-buy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.retry-panel__message {
+  margin: 0;
+  max-width: 284px;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 21px;
+  letter-spacing: -0.65px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.retry-panel__barrier-message {
+  margin: 0;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.retry-panel__barrier-image {
+  width: 244px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.retry-panel__cta {
+  width: 100%;
+  height: 40px;
+  padding: 10px 16px;
+  border-radius: 1000px;
+  border: none;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.retry-panel__cta--primary {
+  background: #11c76f;
+  color: #1f1f1f;
+}
+
+.retry-panel__cta--primary:hover {
+  filter: brightness(1.05);
+}
+
+.retry-panel__cta--ghost {
+  background: #1f1f1f;
+  color: #ffffff;
+}
+
+.retry-panel__cta:active {
+  transform: scale(0.98);
+}
+
+/* --- ValueModifier ----------------------------------------- */
+
+.value-modifier {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  width: 100%;
+  height: 48px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 1000px;
+}
+
+.value-modifier__btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 1000px;
+  border: none;
+  background: #11c76f;
+  color: #1f1f1f;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.value-modifier__btn:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.value-modifier__btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.value-modifier__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.value-modifier__value {
+  flex: 1;
+  text-align: center;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 28px;
+  letter-spacing: -0.65px;
+  color: #11c76f;
+}
+
+/* --- CouponPanel ------------------------------------------- */
+
+.coupon-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.coupon-panel__character {
+  width: 146px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: -24px;
+  z-index: 2;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.35));
+  pointer-events: none;
+}
+
+.coupon-panel__character--placeholder {
+  width: 146px;
+  height: 146px;
+  background: radial-gradient(circle at 50% 35%, #17a564 0%, #0a3d35 70%, transparent 72%);
+  border-radius: 50%;
+  opacity: 0.35;
+}
+
+.coupon-panel__ticket {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  height: 198px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: linear-gradient(
+    -59.8deg,
+    rgba(224, 219, 45, 0.5) 21%,
+    rgba(10, 119, 90, 0.5) 58%
+  ),
+  rgba(0, 0, 0, 0.4);
+  background-size: cover;
+  background-position: center;
+  backdrop-filter: blur(1.25px);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.coupon-panel__notch {
+  position: absolute;
+  top: calc(50% - 31px);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #004543;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.coupon-panel__notch--left {
+  left: -25px;
+}
+
+.coupon-panel__notch--right {
+  right: -25px;
+}
+
+.coupon-panel__notch--top-right {
+  top: calc(50% - 158px);
+  right: -25px;
+  left: auto;
+}
+
+.coupon-panel__brand {
+  position: absolute;
+  top: 19px;
+  left: 108px;
+  width: 100px;
+  height: 15px;
+  object-fit: contain;
+}
+
+.coupon-panel__brand--placeholder {
+  position: absolute;
+  top: 19px;
+  left: 108px;
+  width: 100px;
+  height: 15px;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 2px;
+}
+
+.coupon-panel__discount {
+  position: absolute;
+  top: 40px;
+  left: 28px;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 900;
+  font-style: italic;
+  font-size: 61px;
+  line-height: 87px;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.26);
+  white-space: nowrap;
+}
+
+.coupon-panel__description {
+  position: absolute;
+  top: 100px;
+  right: 33px;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-weight: 700;
+  font-style: italic;
+  font-size: 21.98px;
+  line-height: 1.1;
+  color: #ffffff;
+  text-align: right;
+}
+
+.coupon-panel__cta {
+  position: absolute;
+  left: 33px;
+  right: 9px;
+  bottom: 17px;
+  height: 40px;
+  background: #11c76f;
+  color: #1f1f1f;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  border: none;
+  border-radius: 1000px;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.coupon-panel__cta:hover {
+  filter: brightness(1.05);
+}
+
+.coupon-panel__cta:active {
+  transform: scale(0.98);
+}
+
+.coupon-panel__footnote {
+  margin: 20px 0 0;
+  width: 320px;
+  max-width: 100%;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 12px;
+  color: #ffffff;
+  text-align: center;
+  opacity: 0.85;
+}
+
+/* --- "Meus títulos" footer --------------------------------- */
+
+.result-screen__footer {
+  margin-top: auto;
+  padding: 20px 20px max(20px, env(safe-area-inset-bottom));
+  backdrop-filter: blur(20px);
+  background: rgba(0, 0, 0, 0.08);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+
+.result-screen__titles {
+  width: 100%;
+  height: 40px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.result-screen__titles:hover {
+  opacity: 0.85;
+}
+
+/* --- Small screens ---------------------------------------- */
+
+@media (max-height: 720px) {
+  .result-screen__content {
+    gap: 16px;
+  }
+
+  .retry-panel {
+    gap: 14px;
+  }
+}

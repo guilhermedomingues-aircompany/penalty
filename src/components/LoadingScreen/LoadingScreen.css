@@ -1,45 +1,73 @@
 .loading-screen {
   position: fixed;
   inset: 0;
-  background: #000;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  padding-bottom: 15vh;
+  justify-content: center;
+  gap: clamp(25px, 4vw, 56px);
+  background-color: #004543;
+  text-align: center;
+  overflow: hidden;
+  padding: clamp(32px, 6vw, 72px) 0;
 }
 
-.loading-ball {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
-  transform-origin: center bottom;
-  animation: ball-bounce 0.65s ease-in-out infinite;
+.loading-logo {
+  width: clamp(250px, 40vw, 360px);
+  height: auto;
+  z-index: 1;
 }
 
-.loading-text {
+.logo-container {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.picpay-logo {
+  width: 20%;
+  margin-left: auto;
+}
+
+.loading-slider {
+  position: relative;
+  min-height: 76px;
+  max-width: clamp(280px, 60vw, 460px);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.loading-slide {
   position: absolute;
-  bottom: 48px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: rgba(255, 255, 255, 0.7);
-  font-family: 'Aeonik Pro', system-ui, sans-serif;
-  font-size: 14px;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
+  inset: 0;
+  color: #f4f7ef;
+  font-family: 'Aeonik Pro', 'Inter', system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 13px;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  width: 168px;
+  margin: 0 auto;
 }
 
-@keyframes ball-bounce {
-  0%, 100% {
-    transform: translateY(0) scaleX(1.2) scaleY(0.8);
-    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
-  }
-  45% {
-    transform: translateY(-40vh) scaleX(0.95) scaleY(1.05);
-    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
-  }
-  80% {
-    transform: translateY(0) scaleX(1.2) scaleY(0.8);
-    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
-  }
+.loading-slide.is-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.loading-bolas {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: clamp(350px, 50vw, 400px);
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.6;
 }

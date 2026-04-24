@@ -11,7 +11,20 @@ async function boot() {
     await startMockApi()
   }
 
-  createRoot(document.getElementById('root')!).render(<App />)
+  const root = createRoot(document.getElementById('root')!)
+
+  if (import.meta.env.DEV) {
+    const mock = new URLSearchParams(window.location.search).get('mock')
+    if (mock) {
+      const { default: ResultScreenPreview } = await import(
+        './components/ResultScreen/ResultScreenPreview'
+      )
+      root.render(<ResultScreenPreview mock={mock} />)
+      return
+    }
+  }
+
+  root.render(<App />)
 }
 
 boot()

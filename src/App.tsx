@@ -1,5 +1,7 @@
 /**
- * App.tsx — Orquestrador de telas do PicPenalty (PixiJS)
+ * App.tsx — Orquestrador de telas do PicPenalty (PixiJS).
+ * Responsável apenas pela navegação entre telas; toda a lógica de
+ * apresentação vive dentro dos respectivos componentes.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -7,7 +9,7 @@ import { Assets } from 'pixi.js'
 import GameScene from './components/GameScene/GameScene'
 import LoadingScreen from './components/LoadingScreen/LoadingScreen'
 import HomeScreen from './components/HomeScreen/HomeScreen'
-import ScoreScreen from './components/ScoreScreen/ScoreScreen'
+import { ResultScreenContainer } from './components/ResultScreen'
 import { ASSET_MAP } from './game/assets'
 import { preloadSounds, startBackgroundMusic, stopBackgroundMusic } from './game/sounds'
 import { createSession, completeSession } from './api/client'
@@ -21,7 +23,7 @@ async function preloadAssets(): Promise<void> {
   }
   await Assets.load(Object.keys(ASSET_MAP))
   // TODO: remover delay — apenas para visualizar a LoadingScreen
-  await new Promise((r) => setTimeout(r, 1000))
+  await new Promise((r) => setTimeout(r, 3000))
 }
 
 async function fetchNewSession(prevId?: string | null): Promise<Session> {
@@ -40,7 +42,6 @@ export default function App() {
   const [totalScore, setTotalScore] = useState(0)
   const sessionIdRef = useRef<string | null>(null)
 
-  // Primeira carga: preload de assets + sons + criação de sessão em paralelo
   useEffect(() => {
     preloadSounds()
     Promise.all([preloadAssets(), fetchNewSession()])
@@ -71,9 +72,26 @@ export default function App() {
     }
   }, [])
 
+  const handleRetry = useCallback(async () => {
+    const next = await fetchNewSession(sessionIdRef.current)
+    sessionIdRef.current = next.sessionId
+    setSession(next)
+    setCompletedShots([])
+    setTotalScore(0)
+    setGameKey((prev) => prev + 1)
+    startBackgroundMusic()
+    setScreen('game')
+  }, [])
+
+  const handleClose = useCallback(() => {
+    window.PicPay?.close?.()
+  }, [])
+
   if (!assetsReady || !session) {
     return <LoadingScreen />
   }
+
+  console.log(session, assetsReady)
 
   if (screen === 'home') {
     return <HomeScreen onPlay={handlePlay} />
@@ -81,10 +99,13 @@ export default function App() {
 
   if (screen === 'score') {
     return (
-      <ScoreScreen
+      <ResultScreenContainer
         session={session}
         shots={completedShots}
         totalScore={totalScore}
+        onRetry={handleRetry}
+        onClose={handleClose}
+        onMyTitles={handleClose}
       />
     )
   }
