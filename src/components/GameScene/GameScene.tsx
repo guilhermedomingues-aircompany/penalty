@@ -17,9 +17,8 @@ import { useSwipe, swipeToZone, type SwipeEvent } from '../../hooks/useSwipe'
 import { useHaptics } from '../../hooks/useHaptics'
 import { fireGoalConfetti } from '../../game/confetti'
 import { reportShot, sendTelemetry } from '../../api/client'
-import { playKick, playGoalSound, playCrowdMiss, playStartWhistle, playFinalWhistle } from '../../game/sounds'
-import type { Session, Shot, Multiplier } from '../../types'
-import ShotBar from './ShotBar'
+import { playKick, playGoalSound, playCrowdMiss, playStartWhistle, playFinalWhistle, setMuted } from '../../game/sounds'
+import type { Session, Shot } from '../../types'
 import './GameScene.css'
 
 // ── Dimensões lógicas da cena ─────────────────────────────────────────────────
@@ -35,9 +34,9 @@ const GK_X: Record<string, number> = { left: 38, center: 50, right: 62 }
 const GK_Y: Record<string, number> = { high: 23, low: 27, floor: 29 }
 
 // ── Posições e escalas dos sprites ────────────────────────────────────────────
-const BALL_X = 0.50 * W
-const BALL_Y = 0.75 * H
-const BALL_SCALE = 1.0
+const BALL_X = 0.5 * W
+const BALL_Y = 0.73 * H
+const BALL_SCALE = 1
 const BALL_TARGET_SCALE = 0.23
 const DEBUG_ZONES = false
 
@@ -50,10 +49,10 @@ type ShotDisplay = 'goal' | 'save' | null
 interface SceneSprites {
   gk: Sprite
   ball: Sprite
-  chico: Sprite
   barriers: Sprite[]
   gkShadow: Graphics
   darkOverlay: Graphics
+  trailLine: Graphics
 }
 
 interface GameSceneProps {
@@ -71,26 +70,74 @@ const BALL_NAMES: Record<number, string> = {
   2002: 'Fevernova',
 }
 
+const BALL_DESCRIPTIONS: Record<number, string> = {
+  1958: 'Bola do Penta na Suécia em',
+  1962: 'Bola do Bi no Chile em',
+  1970: 'Bola do Tri no México em',
+  1994: 'Bola do Tetra nos EUA em',
+  2002: 'Bola do Penta no Japão/Coreia em',
+}
+
+// ── Helpers de posicionamento do goleiro ─────────────────────────────────────
+function getOppositeDir(direction: string): string {
+  if (direction === 'left') return 'right'
+  if (direction === 'right') return 'left'
+  return Math.random() < 0.5 ? 'left' : 'right'
+}
+
+function resolveGkMove(direction: string, height: string, isGoal: boolean): { alias: string; x: number; y: number } {
+  if (!isGoal) {
+    const gkY = direction === 'center' && height === 'high'
+      ? ((GK_Y.high + 2) / 100) * H
+      : (GK_Y[height] / 100) * H
+    return { alias: `gk-${direction}-${height}`, x: (GK_X[direction] / 100) * W, y: gkY }
+  }
+  const roll = Math.random()
+  const oppDir = getOppositeDir(direction)
+  const sameDir = direction !== 'center' ? direction : oppDir
+  let gkDir: string
+  let gkHeight: string
+  if (height === 'high') {
+    if (roll < 0.6) { gkDir = sameDir; gkHeight = 'floor' }
+    else if (roll < 0.85) { gkDir = oppDir; gkHeight = 'low' }
+    else { gkDir = oppDir; gkHeight = 'floor' }
+  } else if (roll < 0.5) {
+    gkDir = oppDir; gkHeight = 'high'
+  } else if (roll < 0.8) {
+    gkDir = oppDir; gkHeight = 'floor'
+  } else {
+    gkDir = sameDir; gkHeight = 'floor'
+  }
+  return { alias: `gk-${gkDir}-${gkHeight}`, x: (GK_X[gkDir] / 100) * W, y: (GK_Y[gkHeight] / 100) * H }
+}
+
 // ── Componente ────────────────────────────────────────────────────────────────
 export default function GameScene({ session, onShotComplete, onAllShotsComplete }: GameSceneProps) {
   const canvasContainerRef = useRef<HTMLDivElement>(null)
+  const chicoRef = useRef<HTMLImageElement>(null)
   const spritesRef = useRef<Partial<SceneSprites>>({})
   const appRef = useRef<Application | null>(null)
 
-  const [phase, setPhase] = useState<Phase>('preview')
+  const [phase, setPhase] = useState<Phase>('idle')
   const [shotIndex, setShotIndex] = useState(0)
   const [score, setScore] = useState(0)
+  const [scoreAnimating, setScoreAnimating] = useState(false)
   const [shotResultsLocal, setShotResultsLocal] = useState<ShotDisplay[]>([null, null, null])
-  const [lastShotResult, setLastShotResult] = useState<ShotDisplay>(null)
-  const [isBarExiting, setIsBarExiting] = useState(false)
+  const [muted, setMutedState] = useState(false)
+
+  const toggleMute = useCallback(() => {
+    const next = !muted
+    setMutedState(next)
+    setMuted(next)
+  }, [muted])
 
   const shotIndexRef = useRef(0)
   const scoreRef = useRef(0)
-  const phaseRef = useRef<Phase>('preview')
+  const phaseRef = useRef<Phase>('idle')
 
   const haptics = useHaptics()
 
-  // Limpa timer do multiplicador ao desmontar
+  // Apito de início de jogo ao montar a cena
   useEffect(() => {
     return () => { }
   }, [])
@@ -136,18 +183,18 @@ export default function GameScene({ session, onShotComplete, onAllShotsComplete 
         return s
       }
 
-      const bg = makeSprite('bg', 0.5, 0.5, 1.0)
+      const bg = makeSprite('bg', 0.5, 0.5, 1)
       bg.width = W; bg.height = H
 
       const barriers: Sprite[] = []
       if (barrierCount > 0) {
         const spacing = 67
         const totalW = (barrierCount - 1) * spacing
-        const startX = W / 2 - totalW / 2 - 135
+        const startX = W / 2 - totalW / 2
         for (let i = 0; i < barrierCount; i++) {
-          const b = makeSprite(`barrier-${i + 1}`, 0, 0, 0.60, 1.0)
+          const b = makeSprite(`barrier-${i + 1}`, 0, 0, 0.6, 1)
           b.x = startX + i * spacing
-          b.y = 0.495 * H
+          b.y = 0.5 * H
           barriers.push(b)
         }
       }
@@ -159,9 +206,6 @@ export default function GameScene({ session, onShotComplete, onAllShotsComplete 
         ? `ball-${shot0.multiplier.year}`
         : 'ball-common'
       const ball = makeSprite(ball0Alias, BALL_X / W, BALL_Y / H, BALL_SCALE)
-
-      const chico = makeSprite('chico-confident', 0.15, 1.1, 1.5, 1.0)
-      chico.angle = -5
 
       // Overlay escuro do PixiJS (fica entre gk/ball e chico)
       const darkOverlay = new Graphics()
@@ -204,13 +248,19 @@ export default function GameScene({ session, onShotComplete, onAllShotsComplete 
         app.stage.addChild(gkArea)
       }
 
-      app.stage.addChild(gk, ball, darkOverlay, chico)
-      spritesRef.current = { gk, ball, chico, barriers, gkShadow, darkOverlay }
+      const trailLine = new Graphics()
+      app.stage.addChild(gk, trailLine, ball, darkOverlay)
+      spritesRef.current = { gk, ball, barriers, gkShadow, darkOverlay, trailLine }
 
-      // Animação de entrada do Chico no primeiro preview
-      gsap.set(chico, { x: -chico.width / 2, y: 0.60 * H })
-      gsap.to(darkOverlay, { alpha: 0.8, duration: 0.3, ease: 'power2.out' })
-      gsap.to(chico, { x: 0.22 * W, duration: 0.5, ease: 'back.out(1.2)', delay: 0.2 })
+      // Animação de entrada do Chico HTML
+      const firstShot = session.shots?.[0]
+      const firstHasMultiplier = firstShot?.multiplier && firstShot.multiplier.factor > 1
+      const chicoEl = chicoRef.current
+      if (chicoEl) {
+        chicoEl.src = firstHasMultiplier ? '/sprites/chico/Falando.png' : '/sprites/chico/Confiante.png'
+        gsap.set(chicoEl, { x: -300, rotation: -5 })
+        gsap.to(chicoEl, { x: 0, rotation: -5, duration: 0.5, ease: 'back.out(1.2)', delay: 0.2 })
+      }
 
       sendTelemetry('session_seeded', session.sessionId, {}).catch(() => { })
     }
@@ -234,8 +284,10 @@ export default function GameScene({ session, onShotComplete, onAllShotsComplete 
     shotData: Shot,
     angleDeg = 0,
   ) => {
-    const { gk, ball, chico, gkShadow } = spritesRef.current
-    if (!ball || !gk || !chico) return
+    const { gk, ball, gkShadow, trailLine } = spritesRef.current
+    if (!ball || !gk) return
+
+    if (trailLine) trailLine.clear()
 
     const targetX = (GOAL_X[direction] / 100) * W
     const targetY = (GOAL_Y[height] / 100) * H
@@ -247,21 +299,59 @@ export default function GameScene({ session, onShotComplete, onAllShotsComplete 
     const spin = Math.max(-90, Math.min(90, angleDeg)) * 6
     const ballRotation = (spin + (spin >= 0 ? 90 : -90)) * (Math.PI / 180)
 
+    let stopGoalSound: (() => void) | null = null
+
+    function advanceShot() {
+      stopGoalSound?.()
+      stopGoalSound = null
+      const nextIdx = shotIndexRef.current + 1
+      if (nextIdx >= 3) {
+        phaseRef.current = 'done'
+        setPhase('done')
+        playFinalWhistle()
+        onAllShotsComplete(scoreRef.current)
+        return
+      }
+      shotIndexRef.current = nextIdx
+      setShotIndex(nextIdx)
+      gsap.set(ball, { x: BALL_X, y: BALL_Y, rotation: 0 })
+      gsap.set(ball.scale, { x: BALL_SCALE, y: BALL_SCALE })
+      if (trailLine) trailLine.clear()
+      const nextShot = session.shots?.[nextIdx]
+      const nextAlias = nextShot?.multiplier?.year && nextShot.multiplier.factor > 1
+        ? `ball-${nextShot.multiplier.year}`
+        : 'ball-common'
+      const nextTex = Assets.get<Texture>(nextAlias) ?? Assets.get<Texture>('ball-common')
+      if (nextTex) ball.texture = nextTex
+      gsap.set(gk, { x: 0.5 * W, y: 0.27 * H })
+      if (gkShadow) gsap.set(gkShadow, { x: 0.5 * W })
+      gk.texture = Assets.get<Texture>('gk-idle')
+      const nextHasMultiplier = nextShot?.multiplier && nextShot.multiplier.factor > 1
+      const chicoNextEl = chicoRef.current
+      if (chicoNextEl) {
+        chicoNextEl.src = nextHasMultiplier ? '/sprites/chico/Falando.png' : '/sprites/chico/Confiante.png'
+      }
+      phaseRef.current = 'idle'
+      setPhase('idle')
+    }
+
     const tl = gsap.timeline({
       onComplete: () => {
         if (isGoal) {
-          playGoalSound()
+          stopGoalSound = playGoalSound()
           haptics.goal()
           fireGoalConfetti()
-          chico.texture = Assets.get<Texture>(Math.random() > 0.5 ? 'chico-goal1' : 'chico-goal2')
+          const chicoEl = chicoRef.current
+          if (chicoEl) chicoEl.src = Math.random() > 0.5 ? '/sprites/chico/Comemorando1.png' : '/sprites/chico/Comemorando2.png'
           const newScore = scoreRef.current + (shotData.revealedValue || 0)
           scoreRef.current = newScore
           setScore(newScore)
+          setScoreAnimating(true)
+          setTimeout(() => setScoreAnimating(false), 600)
           const curIdx = shotIndexRef.current
           setShotResultsLocal((prev) => {
             const next = [...prev]; next[curIdx] = 'goal'; return next
           })
-          setLastShotResult('goal')
 
           if (shotData.multiplier && shotData.multiplier.factor > 1) {
             sendTelemetry('multiplier_shown', session?.sessionId, {
@@ -272,128 +362,66 @@ export default function GameScene({ session, onShotComplete, onAllShotsComplete 
         } else {
           playCrowdMiss()
           haptics.save()
-          chico.texture = Assets.get<Texture>(Math.random() > 0.5 ? 'chico-miss-a' : 'chico-miss-b')
+          const chicoMissEl = chicoRef.current
+          if (chicoMissEl) chicoMissEl.src = Math.random() > 0.5 ? '/sprites/chico/ErrouA.png' : '/sprites/chico/ErrouB.png'
           const curIdx = shotIndexRef.current
           setShotResultsLocal((prev) => {
             const next = [...prev]; next[curIdx] = 'save'; return next
           })
-          setLastShotResult('save')
         }
 
         onShotComplete(shotData)
-
-        const nextIdx = shotIndexRef.current + 1
-        setTimeout(() => {
-          if (nextIdx >= 3) {
-            phaseRef.current = 'done'
-            setPhase('done')
-            playFinalWhistle()
-            onAllShotsComplete(scoreRef.current)
-          } else {
-            shotIndexRef.current = nextIdx
-            setShotIndex(nextIdx)
-
-            gsap.set(ball, { x: BALL_X, y: BALL_Y, rotation: 0 })
-            gsap.set(ball.scale, { x: BALL_SCALE, y: BALL_SCALE })
-
-            const nextShot = session.shots?.[nextIdx]
-            const nextAlias = (nextShot?.multiplier?.year && nextShot.multiplier.factor > 1)
-              ? `ball-${nextShot.multiplier.year}`
-              : 'ball-common'
-            const nextTex = Assets.get<Texture>(nextAlias) ?? Assets.get<Texture>('ball-common')
-            if (nextTex) ball.texture = nextTex
-
-            gsap.set(gk, { x: 0.5 * W, y: 0.27 * H })
-            if (gkShadow) gsap.set(gkShadow, { x: 0.5 * W })
-            gk.texture = Assets.get<Texture>('gk-idle')
-
-            chico.texture = Assets.get<Texture>('chico-confident')
-
-            phaseRef.current = 'preview'
-            setPhase('preview')
-          }
-        }, 1800)
+        setTimeout(advanceShot, isGoal ? 6000 : 1800)
       },
     })
 
     // ── Trajetória parabólica (bezier quadrática) ─────────────────────────────
-    // Ponto de controle acima do ponto médio da reta start→target:
-    //   cpX = média dos X  |  cpY = média dos Y − arco para cima
-    const arcHeight = 0.17 * H
-    const cpX = (BALL_X + targetX) / 2
-    const cpY = (BALL_Y + targetY) / 2 - arcHeight
+    // Ponto de controle perto do chute (20% do caminho horizontal) e alto,
+    // criando subida acentuada no início e descida suave até o gol.
+    // ease 'power2.out' = bola sai rápida e desacelera (comportamento real).
+    const arcHeight = 0.38 * H
+    const cpX = BALL_X + 0.2 * (targetX - BALL_X)
+    const cpY = BALL_Y - arcHeight
     const arcProxy = { t: 0 }
     tl.to(arcProxy, {
       t: 1,
       duration: 0.55,
-      ease: 'power2.in',
+      ease: 'power2.out',
       onUpdate() {
         const u = 1 - arcProxy.t
         const tt = arcProxy.t
         ball.x = u * u * BALL_X + 2 * u * tt * cpX + tt * tt * targetX
         ball.y = u * u * BALL_Y + 2 * u * tt * cpY + tt * tt * targetY
+
+        if (trailLine) {
+          // rastro desativado
+        }
       },
     }, 0)
     tl.to(ball, {
       rotation: ballRotation,
       duration: 0.55,
-      ease: 'power2.in',
+      ease: 'power2.out',
     }, 0)
     tl.to(ball.scale, {
       x: BALL_TARGET_SCALE,
       y: BALL_TARGET_SCALE,
       duration: 0.55,
-      ease: 'power2.in',
+      ease: 'power2.out',
     }, 0)
 
     tl.call(() => {
-      if (isGoal) {
-        const roll = Math.random()
-        let gkDir: string, gkHeight: string
-        const oppDir = direction === 'left' ? 'right' : direction === 'right' ? 'left' : (Math.random() < 0.5 ? 'left' : 'right')
-        const sameDir = direction !== 'center' ? direction : oppDir
-        if (height === 'high') {
-          if (roll < 0.60) {
-            gkDir = sameDir; gkHeight = 'floor'
-          } else if (roll < 0.85) {
-            gkDir = oppDir; gkHeight = 'low'
-          } else {
-            gkDir = oppDir; gkHeight = 'floor'
-          }
-        } else {
-          if (roll < 0.50) {
-            gkDir = oppDir; gkHeight = 'high'
-          } else if (roll < 0.80) {
-            gkDir = oppDir; gkHeight = 'floor'
-          } else {
-            gkDir = sameDir; gkHeight = 'floor'
-          }
-        }
-        const alias = `gk-${gkDir}-${gkHeight}`
-        const tex = Assets.get<Texture>(alias)
-        if (tex) gk.texture = tex
-        const gkPosHeight = gkHeight === 'floor' ? 'floor' : gkHeight
-        const gkTargetX = (GK_X[gkDir] / 100) * W
-        gsap.to(gk, { x: gkTargetX, y: (GK_Y[gkPosHeight] / 100) * H, duration: 0.25, ease: 'power2.out' })
-        if (gkShadow) gsap.to(gkShadow, { x: gkTargetX, duration: 0.25, ease: 'power2.out' })
-      } else {
-        const alias = `gk-${direction}-${height}`
-        const tex = Assets.get<Texture>(alias)
-        if (tex) gk.texture = tex
-        const gkY = (direction === 'center' && height === 'high')
-          ? ((GK_Y.high + 2) / 100) * H
-          : (GK_Y[height] / 100) * H
-        const gkDefX = (GK_X[direction] / 100) * W
-        gsap.to(gk, { x: gkDefX, y: gkY, duration: 0.25, ease: 'power2.out' })
-        if (gkShadow) gsap.to(gkShadow, { x: gkDefX, duration: 0.25, ease: 'power2.out' })
-      }
-    }, [], 0.28)
+      const { alias, x, y } = resolveGkMove(direction, height, isGoal)
+      const tex = Assets.get<Texture>(alias)
+      if (tex) gk.texture = tex
+      gsap.to(gk, { x, y, duration: 0.45, ease: 'power2.out' })
+      if (gkShadow) gsap.to(gkShadow, { x, duration: 0.45, ease: 'power2.out' })
+    }, [], 0)
   }, [session, onShotComplete, onAllShotsComplete, haptics])
 
   // ── Swipe handler ───────────────────────────────────────────────────────────
   const handleSwipe = useCallback(({ direction, height, angleDeg }: SwipeEvent) => {
     if (phaseRef.current !== 'idle' || !session) return
-    // guard extra: não deve chegar aqui em preview, mas por segurança
     phaseRef.current = 'kicking'
     setPhase('kicking')
 
@@ -412,145 +440,104 @@ export default function GameScene({ session, onShotComplete, onAllShotsComplete 
 
   const swipeHandlers = useSwipe(handleSwipe)
 
-  const currentMultiplier = session?.shots?.[shotIndex]?.multiplier?.factor ?? 1
-
-  // Overlay e Chico PixiJS: anima por fase
   useEffect(() => {
-    const { chico, darkOverlay } = spritesRef.current
-    if (!chico || !darkOverlay) return
-    if (phase === 'preview') {
-      gsap.killTweensOf(chico)
-      gsap.to(darkOverlay, { alpha: 0.8, duration: 0.3, ease: 'power2.out' })
-      gsap.set(chico, { x: -chico.width / 2, y: 0.60 * H })
-      gsap.to(chico, { x: 0.22 * W, duration: 0.5, ease: 'back.out(1.2)' })
+    if (phase === 'idle') {
+      playStartWhistle()
+      const { darkOverlay } = spritesRef.current
+      if (darkOverlay) {
+        gsap.to(darkOverlay, { alpha: 0, duration: 0.2 })
+      }
     }
   }, [phase])
 
-  const handleChutarClick = useCallback(() => {
-    if (phaseRef.current !== 'preview') return
-
-    playStartWhistle()
-
-    const { chico, darkOverlay } = spritesRef.current
-    if (chico) {
-      gsap.killTweensOf(chico)
-      gsap.to(chico, {
-        x: -chico.width / 2,
-        duration: 0.2,
-        ease: 'power2.in',
-        onComplete: () => {
-          gsap.set(chico, { x: 0.15 * W, y: 1.1 * H })
-        },
-      })
-    }
-    if (darkOverlay) {
-      gsap.to(darkOverlay, { alpha: 0, duration: 0.4, ease: 'power2.out' })
-    }
-
-    // Barra sai com animação CSS mais lenta (0.4s)
-    setIsBarExiting(true)
-    setTimeout(() => {
-      phaseRef.current = 'idle'
-      setPhase('idle')
-      setIsBarExiting(false)
-    }, 400)
-  }, [])
-
-  let speechText: string | null = null
-  if (lastShotResult === 'goal') {
-    speechText = 'GOOOOOL! 🎉'
-  }
-
   return (
-    <div className="game-scene" {...swipeHandlers}>
-      <div ref={canvasContainerRef} className="game-canvas-container" />
-
-      <div className={`game-hud${phase === 'preview' || isBarExiting ? ' game-hud--preview' : ''}`}>
-        <div className="hud-slots">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className={`hud-slot ${shotResultsLocal[i] === 'goal'
-                ? 'slot-goal'
-                : shotResultsLocal[i] === 'save'
-                  ? 'slot-save'
-                  : i === shotIndex
-                    ? 'slot-active'
-                    : 'slot-empty'
-                }`}
+    <div className="game-scene-wrapper">
+      <div className="game-hud">
+        <div className="hud-slots-wrapper">
+          <span className="hud-label">Chances:</span>
+          <div className="hud-slots">
+            {[0, 1, 2].map((i) => {
+              const shot = session?.shots?.[i]
+              const year = shot?.multiplier?.year
+              const ballSrc = year && shot?.multiplier?.factor && shot.multiplier.factor > 1
+                ? `/sprites/bolas-de-futebol/Bola${year}.png`
+                : '/sprites/bolas-de-futebol/BolaComum.png'
+              const isActive = i === shotIndex
+              const isPlayed = shotResultsLocal[i] !== null
+              return (
+                <span
+                  key={i}
+                  className={`hud-slot ${isActive ? 'slot-active' : isPlayed ? 'slot-played' : 'slot-pending'}`}
+                >
+                  <img src={ballSrc} alt="bola" className="hud-slot-ball" />
+                </span>
+              )
+            })}
+            <button
+              className="hud-mute-btn"
+              onClick={toggleMute}
+              aria-label={muted ? 'Ativar som' : 'Silenciar'}
             >
-              {shotResultsLocal[i] !== null ? (
-                <img
-                  src={(() => {
-                    const shot = session?.shots?.[i]
-                    const year = shot?.multiplier?.year
-                    return year && shot?.multiplier?.factor && shot.multiplier.factor > 1
-                      ? `/sprites/bolas-de-futebol/Bola${year}.png`
-                      : '/sprites/bolas-de-futebol/BolaComum.png'
-                  })()}
-                  alt="bola"
-                  style={{ width: '18px', height: '18px', objectFit: 'contain' }}
-                />
-              ) : ''}
-            </span>
-          ))}
+              {muted ? (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </svg>
+              ) : (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
-        <div className="hud-multiplier">X{currentMultiplier}</div>
-        <div className="hud-prize">R$ {score.toFixed(2).replace('.', ',')}</div>
+        <div className="hud-prize-outer">
+          <span className="hud-label">Premiação:</span>
+          <div className="hud-prize-wrapper">
+            <div className={`hud-prize${scoreAnimating ? ' hud-prize--pop' : ''}`}>R$ {score.toFixed(2).replace('.', ',')}</div>
+          </div>
+        </div>
       </div>
 
-      {(phase === 'preview' || isBarExiting) && (
-        <ShotBar shotIndex={shotIndex} shot={session.shots[shotIndex]} exiting={isBarExiting} />
-      )}
+      <div className="game-scene" {...swipeHandlers}>
+        <div ref={canvasContainerRef} className="game-canvas-container" />
 
-      {phase === 'preview' && !isBarExiting && (() => {
-        const m = session.shots[shotIndex]?.multiplier
-        const ballName = m && m.factor > 1 ? (BALL_NAMES[m.year] ?? `Bola ${m.year}`) : null
-        return (
-          <div className="chico-speech-wrap chico-speech-wrap--preview">
-            <div className="chico-speech-bubble">
-              <img className="chico-bubble-svg" src="/speech-bubble.svg" alt="" aria-hidden="true" />
-              <div className="chico-bubble-text chico-bubble-preview-content">
-                {ballName && (
-                  <div className="chico-bubble-ball-row">
-                    <div className="chico-bubble-ball-info">
-                      <span className="chico-bubble-ball-label">Bola</span>
-                      <span className="chico-bubble-ball-name">{ballName}</span>
-                      <span className="chico-bubble-ball-year">{m!.year}</span>
-                    </div>
-                    {m && m.factor > 1 && (
-                      <div className="chico-bubble-preview-right">
-                        <span className="chico-bubble-multi-label">MULTIPLICA o prêmio<br />do chute em:</span>
-                        <span className="chico-bubble-multi-value">{m.factor}X</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                <span className="chico-bubble-text--preview">
-                  O trio no Mexico. Considera a melhor seleção de todos os tempos, Com Pelé Tostão, Gerson E Jairzinho.
-                </span>
+        <img
+          ref={chicoRef}
+          src="/sprites/chico/Confiante.png"
+          alt="chico"
+          className="chico-html-overlay"
+        />
+
+        {phase === 'idle' && (() => {
+          const m = session.shots[shotIndex]?.multiplier
+          const ballName = m && m.factor > 1 ? (BALL_NAMES[m.year] ?? `Bola ${m.year}`) : null
+          if (!ballName) return null
+          const desc = BALL_DESCRIPTIONS[m!.year]
+          return (
+            <div className="chico-speech-wrap chico-speech-wrap--ball-info">
+              <div className="chico-speech-bubble">
+                <div className="ball-bubble-top">
+                  <span className="ball-bubble-desc">
+                    {desc} <strong>{m!.year}</strong>
+                  </span>
+                </div>
+                <div className="ball-bubble-divider" />
+                <div className="ball-bubble-bottom">
+                  <span className="ball-bubble-multi-text">
+                    Esta bola Multiplica o prêmio do chute em:
+                  </span>
+                  <span className="chico-bubble-multi-value">{m!.factor}x</span>
+                </div>
               </div>
             </div>
-          </div>
-        )
-      })()}
+          )
+        })()}
 
-      {speechText && phase !== 'preview' && (
-        <div className="chico-speech-wrap">
-          <div className="chico-speech-bubble">
-            <img className="chico-bubble-svg" src="/speech-bubble.svg" alt="" aria-hidden="true" />
-            <span className="chico-bubble-text">{speechText}</span>
-          </div>
-        </div>
-      )}
-
-      {phase === 'preview' && !isBarExiting && (
-        <button className="chutar-btn" onClick={handleChutarClick}>
-          <div></div>
-          CHUTAR <span className="chutar-arrow">→</span>
-        </button>
-      )}
-
+      </div>
     </div>
   )
 }

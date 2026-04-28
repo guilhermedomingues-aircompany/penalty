@@ -25,8 +25,8 @@ export default function LoadingScreen() {
   return (
     <div className="loading-screen">
       <div className="logo-container">
-        <img className="loading-logo" src={LOGO_SRC} alt="Logotipo do Chute Premiado" />
-        <img className="picpay-logo" src={PICPAY_LOGO_SRC} alt="PicPay" />
+        <img className="loading-logo" src={LOGO_SRC} alt="Logotipo do Chute Premiado" fetchPriority="high" />
+        <img className="picpay-logo" src={PICPAY_LOGO_SRC} alt="PicPay" fetchPriority="high" />
       </div>
 
       <div className="loading-slider" aria-live="polite" aria-atomic="true">
@@ -37,7 +37,7 @@ export default function LoadingScreen() {
         ))}
       </div>
 
-      <img className="loading-bolas" src={BALLS_SRC} alt="" aria-hidden="true" />
+      <img className="loading-bolas" src={BALLS_SRC} alt="" aria-hidden="true" fetchPriority="high" />
     </div>
   )
 }

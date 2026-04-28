@@ -14,25 +14,29 @@ interface StoredSession extends Session {
 const sessions = new Map<string, StoredSession>()
 const telemetryLog: unknown[] = []
 
+type MSWGlobal = typeof globalThis & {
+  __MSW_SCENARIO?: string
+  __MSW_LATENCY?: number
+  __MSW_FORCE_ERROR?: string
+  __MSW_SESSIONS?: Map<string, StoredSession>
+  __MSW_TELEMETRY?: unknown[]
+  __MSW_SCENARIOS?: string[]
+}
+
 function getActiveScenario() {
-  if (typeof window !== 'undefined' && window.__MSW_SCENARIO) {
-    return SCENARIOS[window.__MSW_SCENARIO] ?? null
+  if ((globalThis as MSWGlobal).__MSW_SCENARIO) {
+    return SCENARIOS[(globalThis as MSWGlobal).__MSW_SCENARIO!] ?? null
   }
   return null
 }
 
 function getLatency(): number {
-  if (typeof window !== 'undefined' && window.__MSW_LATENCY !== undefined) {
-    return window.__MSW_LATENCY
-  }
-  return 200
+  const latency = (globalThis as MSWGlobal).__MSW_LATENCY
+  return latency !== undefined ? latency : 200
 }
 
 function getForceError(): string | null {
-  if (typeof window !== 'undefined' && window.__MSW_FORCE_ERROR) {
-    return window.__MSW_FORCE_ERROR
-  }
-  return null
+  return (globalThis as MSWGlobal).__MSW_FORCE_ERROR ?? null
 }
 
 export const handlers = [
@@ -125,8 +129,6 @@ export const handlers = [
 ]
 
 // Debug controls
-if (typeof window !== 'undefined') {
-  window.__MSW_SESSIONS = sessions
-  window.__MSW_TELEMETRY = telemetryLog
-  window.__MSW_SCENARIOS = Object.keys(SCENARIOS)
-}
+;(globalThis as MSWGlobal).__MSW_SESSIONS = sessions
+;(globalThis as MSWGlobal).__MSW_TELEMETRY = telemetryLog
+;(globalThis as MSWGlobal).__MSW_SCENARIOS = Object.keys(SCENARIOS)

@@ -5,13 +5,13 @@
  * iOS Safari não suporta Vibration API — falha silenciosa.
  */
 
-export function useHaptics() {
-  function vibrate(pattern: number | number[]) {
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate(pattern)
-    }
+function vibrate(pattern: number | number[]) {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    navigator.vibrate(pattern)
   }
+}
 
+export function useHaptics() {
   return {
     kick: () => vibrate(30),
     goal: () => vibrate([50, 30, 80, 30, 120]),

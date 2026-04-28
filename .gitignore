@@ -5,6 +5,9 @@ node_modules/
 dist/
 dist-ssr/
 
+# Cobertura de testes
+coverage/
+
 # Vite
 .vite/
 
@@ -34,8 +37,6 @@ pnpm-debug.log*
 .AppleDouble
 .LSOverride
 
-# Symlink dos sprites (referência local, não deve ser versionado)
-public/sprites
 
 # MSW — service worker gerado (pode ser regenerado via `npx msw init public/`)
 # public/mockServiceWorker.js

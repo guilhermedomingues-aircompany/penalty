@@ -18,11 +18,11 @@ export const LAYOUT: Record<string, LayoutItem> = {
   // Goleiro: na linha do gol, centralizado
   goalkeeper: { x: 50, y: 23, scale: 0.35 },
 
-  // Barreira: entre goleiro e bola
-  barrier: { x: 50, y: 38, scale: 0.45 },
+  // Barreira: centro do campo
+  barrier: { x: 50, y: 52, scale: 0.45 },
 
   // Bola: ponto do pênalti (perto do rodapé)
-  ball: { x: 50, y: 82, scale: 1.0 },
+  ball: { x: 50, y: 73, scale: 1 },
 
   // Bola destino (na trave): escala reduzida pela perspectiva
   ballTarget: { y: 22, scale: 0.1 },

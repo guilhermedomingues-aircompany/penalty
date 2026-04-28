@@ -74,8 +74,9 @@ export function useGameStore() {
 
   const goToReturn = useCallback(() => {
     clearActiveSessionId()
-    if (window.PicPay?.close) {
-      window.PicPay.close()
+    const g = globalThis as typeof globalThis & { PicPay?: { close?: () => void } }
+    if (g.PicPay?.close) {
+      g.PicPay.close()
     } else {
       setScreen(SCREENS.WELCOME)
       setSession(null)

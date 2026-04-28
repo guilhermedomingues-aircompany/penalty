@@ -35,13 +35,13 @@
 .shot-bar-top-bg {
   top: 0;
   height: 62%;
-  background: #0EA55C;
+  background: #1F1F1F;
 }
 
 .shot-bar-bottom-bg {
   bottom: 0;
   height: 38%;
-  background: #11C76F;
+  background: #1F1F1F;
 }
 
 /* Conteúdo sobreposto */

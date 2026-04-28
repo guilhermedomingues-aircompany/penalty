@@ -2,9 +2,9 @@ import type { Shot } from '../../types'
 import './ShotBar.css'
 
 interface ShotBarProps {
-  shotIndex: number
-  shot: Shot
-  exiting?: boolean
+  readonly shotIndex: number
+  readonly shot: Shot
+  readonly exiting?: boolean
 }
 
 const formatBRL = (value: number) =>

@@ -5,7 +5,7 @@
  * Sem telas de UI, sem API — apenas o gameplay puro.
  */
 
-import { Application, Assets, Sprite, Text, Graphics, Container } from 'pixi.js'
+import { Application, Assets, Sprite, Text, Graphics } from 'pixi.js'
 import { gsap } from 'gsap'
 
 // ── Dados dos chutes (hardcoded) ─────────────────────────────────────────────

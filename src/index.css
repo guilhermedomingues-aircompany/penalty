@@ -62,7 +62,7 @@ html, body, #root {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #0d1117;
+  background: #1F1F1F;
   font-family: 'Aeonik Pro', system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
@@ -79,14 +79,4 @@ html, body, #root {
   isolation: isolate;
 }
 
-/* Fundo desfocado que preenche a tela nas bordas sem conteúdo */
-#root::before {
-  content: '';
-  position: absolute;
-  inset: -20px;
-  z-index: -1;
-  background-image: url('/sprites/background/gramado.png');
-  background-size: cover;
-  background-position: center;
-  filter: blur(3px) brightness(0.65);
-}
+

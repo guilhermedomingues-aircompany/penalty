@@ -43,9 +43,12 @@ export function useSwipe(onSwipe: (e: SwipeEvent) => void) {
 
     const dx = e.clientX - start.x
     const dy = e.clientY - start.y
-    const dist = Math.sqrt(dx * dx + dy * dy)
+    const dist = Math.hypot(dx, dy)
 
     if (dist < MIN_DISTANCE) return
+
+    // Bloqueia swipe para trás (dy > 0 = dedo moveu para baixo)
+    if (dy > 0) return
 
     const elapsed = performance.now() - start.time
     const speed = dist / Math.max(elapsed, 1)

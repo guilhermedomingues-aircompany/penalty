@@ -2,14 +2,11 @@
 .game-scene {
   position: relative;
   width: 100%;
-  max-width: 480px;
   aspect-ratio: 842 / 1264;
   overflow: hidden;
   touch-action: none;
   cursor: grab;
   container-type: inline-size;
-  /* Suaviza a borda entre o jogo e o fundo desfocado */
-  box-shadow: 0 0 80px 40px rgba(0, 0, 0, 0.75);
 }
 
 /* Canvas container fill */
@@ -20,6 +17,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1;
 }
 
 .game-canvas-container canvas {
@@ -30,22 +28,26 @@
 }
 
 /* ─── HUD ────────────────────────────────────────────── */
+.game-scene-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 480px;
+}
+
 .game-hud {
-  position: absolute;
-  top: 11px;
-  left: 0;
-  right: 0;
+  width: 100%;
   z-index: 10;
   isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
-  padding-top: max(10px, env(safe-area-inset-top));
-  background: rgba(0,0,0,1);
-  backdrop-filter: blur(4px);
+  padding: 22px 16px;
+  background: #1F1F1F;
   color: white;
   font-family: 'Aeonik Pro', system-ui, sans-serif;
+  border-radius: 0 0 16px 16px;
+  margin-bottom: -12px;
 }
 
 .game-hud--preview::after {
@@ -60,35 +62,51 @@
 /* Slots de chute — ○ vazio, ⚽ gol, cor diferente para defesa */
 .hud-slots {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
 }
 .hud-slot {
-  width: clamp(20px, 5.5cqw, 26px);
-  height: clamp(20px, 5.5cqw, 26px);
+  width: clamp(32px, 8cqw, 42px);
+  height: clamp(32px, 8cqw, 42px);
   border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(11px, 3cqw, 14px);
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  transition: box-shadow 0.2s, opacity 0.3s, transform 0.2s;
+}
+.hud-slot-ball {
+  width: 120%;
+  height: 120%;
+  object-fit: contain;
+  display: block;
 }
 .hud-slot.slot-active {
-  border-color: #fff;
-  transform: scale(1.1);
-  background: rgba(255,255,255,0.1);
+  box-shadow: 0 0 5px 3px rgba(33, 211, 117, 0.9);
+  transform: scale(1.12);
 }
-.hud-slot.slot-goal {
-  border-color: #21D375;
-  background: rgba(33,211,117,0.2);
+.hud-slot.slot-played {
+  opacity: 0.35;
 }
-.hud-slot.slot-save {
-  border-color: rgba(248,113,113,0.6);
-  background: rgba(248,113,113,0.1);
+.hud-slot.slot-pending {
+  opacity: 1;
 }
-.hud-slot.slot-empty {
-  border-color: rgba(255,255,255,0.2);
+
+/* Botão de mute */
+.hud-mute-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+  margin-left: 4px;
+}
+.hud-mute-btn:hover {
+  opacity: 1;
 }
 
 /* Multiplicador central */
@@ -100,12 +118,62 @@
   text-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
 
+/* Label de seção */
+.hud-label {
+  display: block;
+  font-size: clamp(10px, 2.8cqw, 13px);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* Wrapper das bolas + label */
+.hud-slots-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Wrapper externo do prêmio (label fora da área opaca) */
+.hud-prize-outer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hud-prize-outer .hud-label {
+  margin-right: 17px;
+}
+
 /* Prêmio acumulado */
+.hud-prize-wrapper {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .hud-prize {
-  font-size: clamp(13px, 3.3cqw, 16px);
-  font-weight: 800;
-  color: #FFD700;
+  font-size: clamp(16px, 4.2cqw, 20px);
+  font-weight: 700;
+  color: #11C76F;
   text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  display: inline-block;
+  transition: transform 0.1s ease;
+}
+
+@keyframes prize-pop {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.3); }
+  60%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.hud-prize--pop {
+  animation: prize-pop 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
 }
 
 /* ─── Multiplicador popup ────────────────────────────── */
@@ -179,16 +247,28 @@
   justify-content: center;
 }
 
-/* Posição acima da ShotBar, à direita do Chico durante preview */
-.chico-speech-wrap.chico-speech-wrap--preview {
-  bottom: auto;
-  top: 29%;
-  left: 26%;
-  transform: translateY(-100%);
-  width: 68%;
-  max-width: 350px;
-  z-index: 22;
+/* Posição inferior para info da bola (substituiu preview) */
+.chico-speech-wrap.chico-speech-wrap--ball-info {
+  bottom: 4%;
+  top: auto;
+  left: 21%;
+  transform: none;
+  width: 72%;
+  max-width: 360px;
+  z-index: 35;
   animation: bubbleFadeIn 0.4s ease 0.25s both;
+}
+
+.chico-html-overlay {
+  position: absolute;
+  bottom: -14%;
+  left: 3%;
+  width: auto;
+  height: 52cqw;
+  z-index: 36;
+  pointer-events: none;
+  transform-origin: bottom left;
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.45));
 }
 
 /* ─── Chico HTML (preview) ───────────────────────────── */
@@ -263,27 +343,26 @@
 .chico-speech-bubble {
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
   animation: bubbleFadeIn 0.3s ease;
-}
-.chico-bubble-svg {
+  background: url('/Union.svg') no-repeat center / 100% 100%;
+  border-radius: 0;
+  /* rabicho ocupa ~9.3% da largura à esquerda → padding-left proporcional */
+  padding: 10px 44px 10px calc(21% + 6px);
   width: 100%;
-  display: block;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+  box-sizing: border-box;
 }
+
 .chico-bubble-text {
-  position: absolute;
-  left: 18%;
-  right: 4%;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #0a0a0a;
+  position: static;
+  transform: none;
+  color: #fff;
   font-family: 'Aeonik Pro', system-ui, sans-serif;
   font-size: clamp(11px, 2.8cqw, 14px);
   font-weight: 700;
   line-height: 1.35;
-  text-align: center;
+  width: 100%;
 }
 .chico-bubble-preview-content {
   display: flex;
@@ -325,7 +404,7 @@
   letter-spacing: 0.3px;
 }
 .chico-bubble-multi-value {
-  font-size: clamp(36px, 10cqw, 54px);
+  font-size: clamp(36px, 10cqw, 52px);
   font-weight: 700;
   color: #11C76F;
   line-height: 1;
@@ -341,7 +420,7 @@
 .chico-bubble-ball-label {
   font-size: clamp(8px, 1.8cqw, 10px);
   font-weight: 800;
-  color: #000000;
+  color: rgba(255,255,255,0.7);
   letter-spacing: 0.5px;
   text-transform: uppercase;
   line-height: 1.2;
@@ -349,13 +428,13 @@
 .chico-bubble-ball-name {
   font-size: clamp(12px, 2.8cqw, 15px);
   font-weight: 800;
-  color: #000000;
+  color: #ffffff;
   line-height: 1.15;
 }
 .chico-bubble-ball-year {
   font-size: clamp(18px, 4.5cqw, 26px);
   font-weight: 700;
-  color: #000000;
+  color: #ffffff;
   line-height: 1.1;
   letter-spacing: -0.5px;
 }
@@ -363,8 +442,43 @@
   font-size: clamp(8px, 1.9cqw, 10px);
   font-weight: 400;
   line-height: 1.3;
-  color: #000000;
+  color: rgba(255,255,255,0.8);
   padding-right: 8px;
+}
+
+.ball-bubble-top {
+  padding-bottom: 6px;
+  width: 100%;
+}
+.ball-bubble-desc {
+  font-size: clamp(10px, 2.4cqw, 13px);
+  font-weight: 400;
+  color: #ffffff;
+  line-height: 1.4;
+}
+.ball-bubble-desc strong {
+  font-weight: 700;
+}
+.ball-bubble-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.36);
+  margin-bottom: 5px;
+}
+.ball-bubble-bottom {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ball-bubble-multi-text {
+  font-size: clamp(12px, 3cqw, 15px);
+  font-weight: 400;
+  color: #ffffff;
+  line-height: 1.35;
+  flex: 1;
 }
 
 @keyframes bubbleFadeIn {

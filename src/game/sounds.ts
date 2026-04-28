@@ -6,9 +6,48 @@
 
 const BASE = '/sounds/'
 
-function play(src: string): void {
+let _muted = false
+const _active = new Set<HTMLAudioElement>()
+
+// ── Desbloqueio de áudio (política de autoplay) ───────────────────────────────
+let _audioUnlocked = false
+const _pendingOnUnlock: Array<() => void> = []
+
+function _onFirstInteraction(): void {
+  if (_audioUnlocked) return
+  _audioUnlocked = true
+  document.removeEventListener('pointerdown', _onFirstInteraction, true)
+  document.removeEventListener('touchstart', _onFirstInteraction, true)
+  _pendingOnUnlock.splice(0).forEach((fn) => fn())
+}
+
+function _playWhenReady(fn: () => void): void {
+  if (_audioUnlocked) {
+    fn()
+  } else {
+    _pendingOnUnlock.push(fn)
+  }
+}
+
+document.addEventListener('pointerdown', _onFirstInteraction, { capture: true, once: true })
+document.addEventListener('touchstart', _onFirstInteraction, { capture: true, once: true })
+
+export function setMuted(muted: boolean): void {
+  _muted = muted
+  _active.forEach((a) => { a.volume = muted ? 0 : a.dataset.baseVolume ? parseFloat(a.dataset.baseVolume) : 1 })
+}
+
+export function isMuted(): boolean {
+  return _muted
+}
+
+function play(src: string, baseVolume = 1): void {
   const a = new Audio(src)
-  a.play().catch(() => {})
+  a.dataset.baseVolume = String(baseVolume)
+  a.volume = _muted ? 0 : baseVolume
+  _active.add(a)
+  a.addEventListener('ended', () => _active.delete(a), { once: true })
+  a.play().catch(() => { _active.delete(a) })
 }
 
 /**
@@ -35,15 +74,20 @@ export function preloadSounds(): void {
 let _bgAudio: HTMLAudioElement | null = null
 
 export function startBackgroundMusic(): void {
-  if (_bgAudio) return
-  _bgAudio = new Audio(BASE + 'torcida.mp3')
-  _bgAudio.loop = true
-  _bgAudio.volume = 0.08
-  _bgAudio.play().catch(() => {})
+  _playWhenReady(() => {
+    if (_bgAudio) return
+    _bgAudio = new Audio(BASE + 'torcida.mp3')
+    _bgAudio.loop = true
+    _bgAudio.dataset.baseVolume = '0.08'
+    _bgAudio.volume = _muted ? 0 : 0.08
+    _active.add(_bgAudio)
+    _bgAudio.play().catch(() => {})
+  })
 }
 
 export function stopBackgroundMusic(): void {
   if (!_bgAudio) return
+  _active.delete(_bgAudio)
   _bgAudio.pause()
   _bgAudio.currentTime = 0
   _bgAudio = null
@@ -52,7 +96,7 @@ export function stopBackgroundMusic(): void {
 // ── Apito ─────────────────────────────────────────────────────────────────────
 
 export function playStartWhistle(): void {
-  play(BASE + 'apito-chutar-3.mp3')
+  _playWhenReady(() => play(BASE + 'apito-chutar-3.mp3'))
 }
 
 export function playFinalWhistle(): void {
@@ -68,8 +112,42 @@ export function playKick(): void {
 
 // ── Gol ───────────────────────────────────────────────────────────────────────
 
-export function playGoalSound(): void {
-  play(BASE + 'comemorando-1.mp3')
+export function playGoalSound(): () => void {
+  const a = new Audio(BASE + 'comemorando-1.mp3')
+  a.dataset.baseVolume = '1'
+  a.volume = _muted ? 0 : 1
+  _active.add(a)
+  a.addEventListener('ended', () => _active.delete(a), { once: true })
+  a.play().catch(() => { _active.delete(a) })
+
+  // fade out: começa em 5s, dura 1s até silenciar
+  const FADE_START = 5000
+  const FADE_DURATION = 1000
+  const STEPS = 20
+  let fadeTimer: ReturnType<typeof setTimeout> | null = null
+  let fadeInterval: ReturnType<typeof setInterval> | null = null
+
+  fadeTimer = setTimeout(() => {
+    if (_muted) return
+    const startVol = a.volume
+    const stepTime = FADE_DURATION / STEPS
+    const stepSize = startVol / STEPS
+    fadeInterval = setInterval(() => {
+      a.volume = Math.max(0, a.volume - stepSize)
+      if (a.volume <= 0) {
+        clearInterval(fadeInterval!)
+        fadeInterval = null
+      }
+    }, stepTime)
+  }, FADE_START)
+
+  return () => {
+    if (fadeTimer) { clearTimeout(fadeTimer); fadeTimer = null }
+    if (fadeInterval) { clearInterval(fadeInterval); fadeInterval = null }
+    _active.delete(a)
+    a.pause()
+    a.currentTime = 0
+  }
 }
 
 // ── Defesa / Torcida lamentando ───────────────────────────────────────────────

@@ -39,7 +39,7 @@ export function useSessionResume(): { resumeData: Session | null; checked: boole
     getSession(sessionId)
       .then((session) => {
         if (session.status === 'in_progress' && (session.shotsCompleted ?? 0) < 3) {
-          sendTelemetry('session_resume', sessionId!, {
+          sendTelemetry('session_resume', sessionId, {
             sessionId,
             shotsCompleted: session.shotsCompleted,
           }).catch(() => {})

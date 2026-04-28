@@ -1,0 +1,35 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: "ms-igaming-football-game-web"
+  tags:
+    - vite
+    - react
+    - typescript
+    - pixijs
+    - frontend
+  description: "Frontend do jogo de futebol iGaming"
+  annotations:
+    backstage.io/kubernetes-label-selector: service=ms-igaming-football-game-web
+    backstage.io/techdocs-ref: dir:.
+    backstage.io/kubernetes-id: "ms-igaming-football-game-web"
+    github.com/project-slug: "PicPay/ms-igaming-football-game-web"
+    sonarqube.org/project-key: "PicPay_ms-igaming-football-game-web"
+  labels:
+    moonlight.picpay/language: typescript
+    moonlight.picpay/framework: vite
+    moonlight.picpay/monitoring: default
+    moonlight.picpay/database: default
+    moonlight.picpay/cache: default
+    moonlight.picpay/queue: default
+  links:
+    - url: https://picpay.atlassian.net/jira/software/c/projects/CAP
+      title: Jira Board
+      icon: dashboard
+    - url: https://picpay.atlassian.net/wiki/spaces/Capitaliza2/overview
+      title: Confluence Docs
+      icon: dashboard
+spec:
+  type: website
+  lifecycle: development
+  owner: igaming-squad

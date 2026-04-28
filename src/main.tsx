@@ -5,16 +5,23 @@ import { initAuthToken } from './api/client'
 
 initAuthToken()
 
+const params = new URLSearchParams(window.location.search)
+const mswEnabled = import.meta.env.DEV || params.get('msw') === '1'
+
 async function boot() {
-  if (import.meta.env.DEV) {
-    const { startMockApi } = await import('./mocks/browser.js')
-    await startMockApi()
+  if (mswEnabled) {
+    try {
+      const { startMockApi } = await import('./mocks/browser.js')
+      await startMockApi()
+    } catch (err) {
+      console.warn('[MSW] Falha ao iniciar mock API, continuando sem mock:', err)
+    }
   }
 
   const root = createRoot(document.getElementById('root')!)
 
   if (import.meta.env.DEV) {
-    const mock = new URLSearchParams(window.location.search).get('mock')
+    const mock = params.get('mock')
     if (mock) {
       const { default: ResultScreenPreview } = await import(
         './components/ResultScreen/ResultScreenPreview'

@@ -21,12 +21,12 @@ export const MULTIPLIER_TABLE = [
 ]
 
 const MULTIPLIER_PROBS: number[][] = [
-  [0.40, 0.10, 0.25, 0.10, 0.15],
-  [0.15, 0.25, 0.15, 0.20, 0.25],
-  [0.05, 0.30, 0.15, 0.15, 0.35],
+  [0.4, 0.1, 0.25, 0.1, 0.15],
+  [0.15, 0.25, 0.15, 0.2, 0.25],
+  [0.05, 0.3, 0.15, 0.15, 0.35],
 ]
 
-const PRIZE_VALUES = [0, 2.50, 5.00, 10.00, 25.00, 50.00, 100.00, 250.00, 500.00, 1000.00, 5000.00]
+const PRIZE_VALUES = [0, 2.5, 5, 10, 25, 50, 100, 250, 500, 1000, 5000]
 
 function randomId(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`
@@ -47,17 +47,17 @@ function weightedPick<T>(items: T[], weights: number[]): T {
 }
 
 export function getBarrierCount(ticketValue: number): number {
-  if (ticketValue >= 25.00) return 0
-  if (ticketValue > 12.50) return 0
-  if (ticketValue >= 12.50) return 1
-  if (ticketValue >= 10.00) return 2
-  if (ticketValue >= 7.50) return 3
-  if (ticketValue >= 5.00) return 4
+  if (ticketValue >= 25) return 0
+  if (ticketValue > 12.5) return 0
+  if (ticketValue >= 12.5) return 1
+  if (ticketValue >= 10) return 2
+  if (ticketValue >= 7.5) return 3
+  if (ticketValue >= 5) return 4
   return 5
 }
 
 export function getDistance(ticketValue: number): '7m' | '12m' {
-  return ticketValue >= 25.00 ? '7m' : '12m'
+  return ticketValue >= 25 ? '7m' : '12m'
 }
 
 export function pickMultiplier(shotIndex: number): { year: number; factor: number } {
@@ -92,7 +92,7 @@ export function distributeRevealedValues(
       break
     }
     case 'progressive': {
-      const weights = [0.25, 0.50, 1.00].slice(0, goalIndices.length)
+      const weights = [0.25, 0.5, 1].slice(0, goalIndices.length)
       const totalWeight = weights.reduce((a, b) => a + b, 0)
       goalIndices.forEach((goalIdx, i) => {
         values[goalIdx] = Math.round((totalValue * weights[i] / totalWeight) * 100) / 100
@@ -190,22 +190,22 @@ export function generateSession({ ticketId, ticketValue, override = {} }: Genera
 
 export const SCENARIOS: Record<string, Scenario> = {
   threeGoalsGolaco: {
-    override: { profile: 'golaco', totalValue: 100.00, results: [true, true, true] },
+    override: { profile: 'golaco', totalValue: 100, results: [true, true, true] },
   },
   allSaves: {
     override: { profile: 'progressive', totalValue: 0, results: [false, false, false] },
   },
   goldenBall: {
-    override: { profile: 'golden_ball', totalValue: 50.00, results: [true, false, true] },
+    override: { profile: 'golden_ball', totalValue: 50, results: [true, false, true] },
   },
   progressiveLow: {
-    override: { profile: 'progressive', totalValue: 5.00, results: [true, true, true] },
+    override: { profile: 'progressive', totalValue: 5, results: [true, true, true] },
   },
   singleGoalHighMultiplier: {
-    override: { profile: 'golaco', totalValue: 250.00, results: [false, false, true] },
+    override: { profile: 'golaco', totalValue: 250, results: [false, false, true] },
   },
   penalty7m: {
-    ticketValue: 25.00,
-    override: { profile: 'progressive', totalValue: 25.00, results: [true, true, false] },
+    ticketValue: 25,
+    override: { profile: 'progressive', totalValue: 25, results: [true, true, false] },
   },
 }

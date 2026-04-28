@@ -10,7 +10,7 @@ let _authToken: string | null = null
  */
 export function initAuthToken(): void {
   try {
-    const params = new URLSearchParams(window.location.search)
+    const params = new URLSearchParams((globalThis as typeof globalThis & { location?: Location }).location?.search ?? '')
     const token = params.get('token') ?? params.get('auth_token')
     if (token) _authToken = token
   } catch {

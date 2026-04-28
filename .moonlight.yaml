@@ -1,0 +1,15 @@
+sonar:
+  enabled: true
+  type: other
+build:
+  enabled: true
+deploy:
+  type: argocd
+steps:
+  - name: lint
+    image: 289208114389.dkr.ecr.us-east-1.amazonaws.com/moonlight-images/node:20.16.0-906a092761ee4553f1d5721074d633baf6282633
+    commands:
+      - echo //${ARTIFACT_MANAGER_URL}/repository/picpay-npm-hosted/:_auth="$(echo -n "${ARTIFACT_MANAGER_USER}:${ARTIFACT_MANAGER_PASSWORD}" | base64)" >>~/.npmrc
+      - echo //${ARTIFACT_MANAGER_URL}/repository/picpay-npm-group/:_auth="$(echo -n "${ARTIFACT_MANAGER_USER}:${ARTIFACT_MANAGER_PASSWORD}" | base64)" >>~/.npmrc
+      - npm install
+      - npm run lint
