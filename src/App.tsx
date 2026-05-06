@@ -15,6 +15,8 @@ import { createSession, completeSession } from './api/client'
 import type { Session, Shot } from './types'
 
 const MSW_ENABLED = new URLSearchParams(window.location.search).get('msw') === '1'
+const RETRY_DEEPLINK =
+  'picpay://picpay/ramaleon/hitmaker?hitId=cap-home&stepId=transactionLoading&origin=TESTE&quotaCount=1&catalogId=69d68f36613de6cd1300888d'
 
 function loadImage(src: string): Promise<void> {
   return new Promise((resolve) => {
@@ -98,6 +100,7 @@ export default function App() {
   }, [])
 
   const handleRetry = useCallback(async () => {
+    console.log('handleRetry')
     const next = await fetchNewSession(sessionIdRef.current)
     sessionIdRef.current = next.sessionId
     setSession(next)
@@ -130,6 +133,7 @@ export default function App() {
         session={session}
         shots={completedShots}
         totalScore={totalScore}
+        retryDeepLink={RETRY_DEEPLINK}
         onRetry={handleRetry}
         onClose={handleClose}
         onMyTitles={handleClose}

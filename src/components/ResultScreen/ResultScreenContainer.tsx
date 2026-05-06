@@ -13,7 +13,8 @@ interface ResultScreenContainerProps {
   session: Session
   shots: Shot[]
   totalScore: number
-  onRetry?: () => void
+  retryDeepLink?: string
+  onRetry?: (quotaCount: number) => void
   onClose?: () => void
   onMyTitles?: () => void
 }
@@ -27,6 +28,13 @@ const BALL_IMAGES: Record<string, string> = {
 }
 const DEFAULT_BALL = '/sprites/bolas-de-futebol/BolaComum.png'
 const SHOT_ORDINALS = ['1º Chute', '2º Chute', '3º Chute'] as const
+
+function withQuotaCount(deepLink: string, quotaCount: number): string {
+  const [base, query = ''] = deepLink.split('?')
+  const params = new URLSearchParams(query)
+  params.set('quotaCount', String(quotaCount))
+  return `${base}?${params.toString()}`
+}
 
 function formatBRL(value: number): string {
   return value.toLocaleString('pt-BR', {
@@ -55,15 +63,29 @@ function buildProps({
   session,
   shots,
   totalScore,
+  retryDeepLink,
   onRetry,
   onClose,
   onMyTitles,
 }: ResultScreenContainerProps): ResultScreenProps {
   const hasPrize = totalScore > 0
+  const hasAnyGoal = shots.some((shot) => shot.result === 'goal')
+  const missedAllShots = shots.length > 0 && !hasAnyGoal
   const resultCards = buildResultCards(shots)
+  const handleRetryAction = (quotaCount: number) => {
+    if (retryDeepLink) {
+      try {
+        globalThis.location?.assign(withQuotaCount(retryDeepLink, quotaCount))
+        return
+      } catch {
+        // jsdom/navigation environments may block custom schemes.
+      }
+    }
+    onRetry?.(quotaCount)
+  }
 
   return {
-    title: hasPrize ? 'Mandou muito bem!' : 'Quase! Bora tentar de novo!',
+    title: missedAllShots ? 'Quase! Bora tentar de novo!' : 'Mandou muito bem!',
     resultCards,
     showPrizeBanner: hasPrize,
     prize: hasPrize
@@ -75,16 +97,17 @@ function buildProps({
     showRetryPanel: true,
     retry: {
       badge: '01',
-      message: hasPrize
-        ? `Aproveite e aumente suas chances de ganhar ${formatBRL(0)}`
-        : 'Quantos números você quer comprar?',
+      message: missedAllShots
+        ? 'Quantos números você quer comprar?'
+        : `Aproveite e aumente suas chances de ganhar ${formatBRL(0)}`,
       value: formatBRL(session.ticketValue ?? 2.5),
       buttonLabel: 'Chutar agora',
-      barrierMessage: hasPrize
-        ? undefined
-        : `Falta com ${session.barrierCount} pessoas na barreira`,
-      primary: !hasPrize,
-      onPrimaryAction: onRetry,
+      barrierCount: missedAllShots ? session.barrierCount : undefined,
+      barrierMessage: missedAllShots
+        ? `Falta com ${session.barrierCount} pessoas na barreira`
+        : undefined,
+      primary: missedAllShots,
+      onPrimaryAction: handleRetryAction,
     },
     onClose,
     onMyTitles,

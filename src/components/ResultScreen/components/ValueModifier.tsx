@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface ValueModifierProps {
   value: string
@@ -41,6 +41,10 @@ export default function ValueModifier({
 }: Readonly<ValueModifierProps>) {
   const [amount, setAmount] = useState<number>(() => parseCurrency(value))
 
+  useEffect(() => {
+    setAmount(parseCurrency(value))
+  }, [value])
+
   const handleDecrease = () => {
     const next = Math.max(0, amount - step)
     if (next === amount) return
@@ -55,7 +59,7 @@ export default function ValueModifier({
   }
 
   return (
-    <div className="value-modifier" role="group" aria-label="Ajustar valor">
+    <div className="value-modifier" aria-label="Ajustar valor">
       <button
         type="button"
         className="value-modifier__btn"

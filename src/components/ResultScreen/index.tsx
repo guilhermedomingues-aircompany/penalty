@@ -21,12 +21,6 @@ export default function ResultScreen({
     <div className="result-screen">
       <div className="result-screen__stage">
         <div className="result-screen__bg" aria-hidden="true" />
-        <img
-          className="result-screen__bolas"
-          src="/sprites/background/bolas_transparent.svg"
-          alt=""
-          aria-hidden="true"
-        />
 
         <div className="result-screen__content">
           <header className="result-screen__header">
@@ -67,6 +61,12 @@ export default function ResultScreen({
           </button>
         </footer>
       </div>
+      <img
+        className="result-screen__bolas"
+        src="/sprites/background/bolas_transparent.svg"
+        alt=""
+        aria-hidden="true"
+      />
     </div>
   )
 }

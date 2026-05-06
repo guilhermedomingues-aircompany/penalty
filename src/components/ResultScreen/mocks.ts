@@ -81,6 +81,7 @@ export const retryMock: ResultScreenProps = {
     message: 'Quantos números você quer comprar?',
     value: 'R$ 2,50',
     buttonLabel: 'Chutar agora',
+    barrierCount: 5,
     barrierMessage: 'Falta com 5 pessoas na barreira',
     // TODO: quando houver um asset combinado da barreira, definir aqui.
     // barrierImage: '/sprites/jogadores-da-barreira/Barreira-group.png',
@@ -91,6 +92,7 @@ export const retryMock: ResultScreenProps = {
 export const couponMock: ResultScreenProps = {
   title: 'Mandou muito bem!',
   showCouponPanel: true,
+  showRetryPanel: true,
   resultCards: [
     {
       status: 'error',
@@ -125,6 +127,13 @@ export const couponMock: ResultScreenProps = {
     characterImage: '/sprites/chico/Comemorando1.png',
     // brandLogo: '/sprites/partners/centauro.svg',
     // backgroundImage: '/sprites/coupon/coupon-bg.png',
+  },
+  retry: {
+    badge: '01',
+    message: 'Aproveite e aumente suas chances de ganhar R$ [0,00]',
+    value: 'R$ 2,50',
+    buttonLabel: 'Chutar agora',
+    primary: false,
   },
 }
 

@@ -27,11 +27,12 @@ export interface RetryContent {
   message: string
   value: string
   buttonLabel: string
-  onIncrease?: () => void
-  onDecrease?: () => void
-  onPrimaryAction?: () => void
+  onIncrease?: (nextValue: number) => void
+  onDecrease?: (nextValue: number) => void
+  onPrimaryAction?: (quotaCount: number) => void
   disabledDecrease?: boolean
   disabledIncrease?: boolean
+  barrierCount?: number
   barrierMessage?: string
   barrierImage?: string
   primary?: boolean

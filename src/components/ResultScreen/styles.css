@@ -29,10 +29,8 @@
 
 .result-screen__stage {
   position: relative;
-  width: 100%;
-  max-width: 393px;
-  height: 100%;
-  max-height: 100dvh;
+  width: 100dvw;
+  height: 100dvh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -50,10 +48,9 @@
 .result-screen__bolas {
   position: absolute;
   bottom: 0;
-  right: -40px;
-  width: 445px;
+  right: 0;
+  width: clamp(350px, 50vw, 400px);
   height: auto;
-  opacity: 0.05;
   pointer-events: none;
   user-select: none;
   z-index: 0;
@@ -65,10 +62,11 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   padding: max(12px, env(safe-area-inset-top)) 20px
     max(20px, env(safe-area-inset-bottom));
   gap: 20px;
-  overflow-y: auto;
+  overflow-y: hidden;
   overflow-x: hidden;
 }
 
@@ -133,7 +131,7 @@
   height: 76px;
   border-radius: 8px;
   border: 1px solid #11c76f;
-  overflow: visible;
+  overflow: hidden;
   isolation: isolate;
 }
 
@@ -147,10 +145,10 @@
 
 .shot-card__ball {
   position: absolute;
-  top: -1px;
+  top: 2px;
   left: -9px;
-  width: 30px;
-  height: 30px;
+  width: 29px;
+  height: 29px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
   z-index: 2;
@@ -164,11 +162,12 @@
 
 .shot-card__status {
   position: absolute;
-  top: 4px;
-  left: 14px;
+  width: 59%;
+  top: 7px;
+  left: 7px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   height: 20px;
   padding: 0 8px;
   border-radius: 1000px;
@@ -185,8 +184,8 @@
 
 .shot-card__multiplier {
   position: absolute;
-  top: 6px;
-  right: 8px;
+  top: 10px;
+  right: 13px;
   font-family: 'Aeonik Pro', system-ui, sans-serif;
   font-weight: 400;
   font-size: 16px;
@@ -365,6 +364,23 @@
   object-fit: contain;
 }
 
+.retry-panel__barrier-players {
+  width: 244px;
+  max-width: 100%;
+  min-height: 100px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+}
+
+.retry-panel__barrier-player {
+  width: 42px;
+  height: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .retry-panel__cta {
   width: 100%;
   height: 40px;
@@ -461,56 +477,54 @@
   align-items: center;
   gap: 0;
   width: 100%;
-  margin-top: 12px;
-}
-
-.coupon-panel__character {
-  width: 146px;
-  height: auto;
-  object-fit: contain;
-  margin-bottom: -24px;
-  z-index: 2;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.35));
-  pointer-events: none;
-}
-
-.coupon-panel__character--placeholder {
-  width: 146px;
-  height: 146px;
-  background: radial-gradient(circle at 50% 35%, #17a564 0%, #0a3d35 70%, transparent 72%);
-  border-radius: 50%;
-  opacity: 0.35;
 }
 
 .coupon-panel__ticket {
   position: relative;
   width: 100%;
   max-width: 320px;
-  height: 198px;
+  height: 171px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.9);
-  background: linear-gradient(
-    -59.8deg,
-    rgba(224, 219, 45, 0.5) 21%,
-    rgba(10, 119, 90, 0.5) 58%
-  ),
-  rgba(0, 0, 0, 0.4);
+  background: url('/sprites/background/gramado.png');
   background-size: cover;
   background-position: center;
-  backdrop-filter: blur(1.25px);
   overflow: hidden;
   isolation: isolate;
 }
 
+.coupon-panel__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(1.25px);
+  -webkit-backdrop-filter: blur(1.25px);
+  z-index: 0;
+}
+
+.coupon-panel__content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 100%;
+  width: 100%;
+  padding: 12px 20px;
+  box-sizing: border-box;
+}
+
 .coupon-panel__notch {
   position: absolute;
-  top: calc(50% - 31px);
+  top: calc(50% - 17.5px);
   width: 50px;
   height: 50px;
   border-radius: 50%;
   background: #004543;
   transform: translateY(-50%);
-  z-index: 2;
+  z-index: 1;
 }
 
 .coupon-panel__notch--left {
@@ -522,62 +536,67 @@
 }
 
 .coupon-panel__notch--top-right {
-  top: calc(50% - 158px);
-  right: -25px;
-  left: auto;
+  top: calc(50% - 144.5px);
+  right: -55px;
+}
+
+.coupon-panel__top-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  min-height: 16px;
 }
 
 .coupon-panel__brand {
-  position: absolute;
-  top: 19px;
-  left: 108px;
-  width: 100px;
-  height: 15px;
+  grid-column: 2;
+  width: 81px;
+  height: 12.375px;
   object-fit: contain;
 }
 
-.coupon-panel__brand--placeholder {
-  position: absolute;
-  top: 19px;
-  left: 108px;
-  width: 100px;
-  height: 15px;
-  background: rgba(255, 255, 255, 0.55);
-  border-radius: 2px;
+.coupon-panel__footnote-inline {
+  grid-column: 3;
+  justify-self: end;
+  margin: 0;
+  width: 67px;
+  font-family: 'Aeonik Pro', system-ui, sans-serif;
+  font-weight: 300;
+  font-style: italic;
+  font-size: 8px;
+  line-height: 8px;
+  color: #ffffff;
+  text-align: center;
 }
 
 .coupon-panel__discount {
-  position: absolute;
-  top: 40px;
-  left: 28px;
+  margin-top: 2px;
+  width: 206px;
   font-family: 'Aeonik Pro', system-ui, sans-serif;
   font-weight: 900;
   font-style: italic;
-  font-size: 61px;
-  line-height: 87px;
+  font-size: 48px;
+  line-height: 1;
   letter-spacing: 0;
   color: rgba(255, 255, 255, 0.26);
   white-space: nowrap;
+  text-align: center;
 }
 
 .coupon-panel__description {
-  position: absolute;
-  top: 100px;
-  right: 33px;
+  width: 100%;
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   font-weight: 700;
   font-style: italic;
-  font-size: 21.98px;
-  line-height: 1.1;
+  font-size: 15px;
+  line-height: 1.5;
   color: #ffffff;
-  text-align: right;
+  text-align: center;
 }
 
 .coupon-panel__cta {
-  position: absolute;
-  left: 33px;
-  right: 9px;
-  bottom: 17px;
+  margin-top: 2px;
+  width: 280px;
   height: 40px;
   background: #11c76f;
   color: #1f1f1f;
@@ -599,26 +618,11 @@
   transform: scale(0.98);
 }
 
-.coupon-panel__footnote {
-  margin: 20px 0 0;
-  width: 320px;
-  max-width: 100%;
-  font-family: 'Aeonik Pro', system-ui, sans-serif;
-  font-weight: 400;
-  font-size: 10px;
-  line-height: 12px;
-  color: #ffffff;
-  text-align: center;
-  opacity: 0.85;
-}
-
 /* --- "Meus títulos" footer --------------------------------- */
 
 .result-screen__footer {
   margin-top: auto;
   padding: 20px 20px max(20px, env(safe-area-inset-bottom));
-  backdrop-filter: blur(20px);
-  background: rgba(0, 0, 0, 0.08);
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
 }
