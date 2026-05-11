@@ -110,19 +110,35 @@ export default function RetryPanel({
   const remainingBarrierCount = resolveRemainingBarrierCount(baseBarrierCount, quotaCount)
   const barrierLabel = remainingBarrierCount === 1 ? 'pessoa' : 'pessoas'
   const shouldShowBarrierDetails = Boolean(barrierCount || barrierMessage)
-  const resolvedBarrierMessage =
-    shouldShowBarrierDetails
-      ? `Falta com ${remainingBarrierCount} ${barrierLabel} na barreira`
-      : undefined
-  const barrierPlayerSprites = shouldShowBarrierDetails
-    ? buildBarrierPlayerSprites(remainingBarrierCount)
-    : []
+  const isPenaltyMode = shouldShowBarrierDetails && remainingBarrierCount === 0
+
+  let resolvedBarrierMessage: string | undefined
+  if (isPenaltyMode) {
+    resolvedBarrierMessage = 'Penalty'
+  } else if (shouldShowBarrierDetails) {
+    resolvedBarrierMessage = `Falta com ${remainingBarrierCount} ${barrierLabel} na barreira`
+  }
+  const barrierPlayerSprites =
+    shouldShowBarrierDetails && !isPenaltyMode
+      ? buildBarrierPlayerSprites(remainingBarrierCount)
+      : []
   const hasBarrierPlayers = barrierPlayerSprites.length > 0
   const hasFallbackBarrierImage =
-    shouldShowBarrierDetails && !hasBarrierPlayers && Boolean(barrierImage)
+    shouldShowBarrierDetails && !isPenaltyMode && !hasBarrierPlayers && Boolean(barrierImage)
 
   let barrierVisual: ReactNode = null
-  if (hasBarrierPlayers) {
+  if (isPenaltyMode) {
+    barrierVisual = (
+      <div className="retry-panel__barrier-players" aria-hidden="true">
+        <img
+          className="retry-panel__goalkeeper"
+          src="/sprites/goleiro/GoleiroCentro.png"
+          alt=""
+          aria-hidden="true"
+          />
+      </div>
+    )
+  } else if (hasBarrierPlayers) {
     barrierVisual = (
       <div className="retry-panel__barrier-players" aria-hidden="true">
         {barrierPlayerSprites.map((spriteSrc) => (
@@ -173,6 +189,7 @@ export default function RetryPanel({
         type="button"
         className={`retry-panel__cta ${primary ? 'retry-panel__cta--primary' : 'retry-panel__cta--ghost'}`}
         onClick={() => onPrimaryAction?.(quotaCount)}
+        disabled={quotaCount <= QUOTA_MIN}
       >
         {buttonLabel}
       </button>

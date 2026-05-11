@@ -367,7 +367,7 @@
 .retry-panel__barrier-players {
   width: 244px;
   max-width: 100%;
-  min-height: 100px;
+  height: 125px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -379,6 +379,11 @@
   height: auto;
   object-fit: contain;
   flex-shrink: 0;
+}
+
+.retry-panel__goalkeeper {
+  height: 100%;
+  object-fit: contain;
 }
 
 .retry-panel__cta {
@@ -409,7 +414,21 @@
   color: #ffffff;
 }
 
-.retry-panel__cta:active {
+.retry-panel__cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: none;
+}
+
+.retry-panel__cta:disabled:hover {
+  filter: none;
+}
+
+.retry-panel__cta:disabled:active {
+  transform: none;
+}
+
+.retry-panel__cta:active:not(:disabled) {
   transform: scale(0.98);
 }
 
